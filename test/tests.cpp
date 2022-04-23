@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "Lexer.hpp"
 
 // Demonstrate some basic assertions.
 TEST(HelloTest, BasicAssertions) {
