@@ -3,6 +3,7 @@ project(TKOM_Projekt)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 
 include(FetchContent)
 FetchContent_Declare(
@@ -12,6 +13,7 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
 
 
 file(GLOB proj_LIB CONFIGURE_DEPENDS "src/lib/*.h" "src/lib/*.cpp" "src/lib/*.hpp")
