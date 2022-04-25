@@ -14,7 +14,6 @@ enum class TokenType{
     Semicolon,
     Comma,
     Underscore,
-    Hash,
     Assign,
     Plus,
     Minus,

@@ -33,7 +33,6 @@ const std::map<char, TokenType> Lexer<T>::single_char_operator_lookup{
     {';',   TokenType::Semicolon},
     {',',   TokenType::Comma},
     {'_',   TokenType::Underscore},
-    {'#',   TokenType::Hash},
     {'=',   TokenType::Assign},
     {'+',   TokenType::Plus},
     {'-',   TokenType::Minus},
@@ -63,9 +62,13 @@ const std::map<std::string, TokenType> Lexer<T>::two_char_operator_lookup{
 
 
 template<>
-void Lexer<>::advance_character(){
+bool Lexer<>::advance_character(){
     input_stream >> current_symbol;
-    std::cout << "advanced " << current_symbol << std::endl;
+    if(!input_stream.eof()){
+        current_position.column++;
+        return true;
+    }
+    return false;
 }
 
 template<typename T>
@@ -74,7 +77,7 @@ bool Lexer<T>::try_build_operator(){
         T temp = current_symbol;
         Position temp_pos = current_position;
         advance_character();
-        if(two_char_operators.at(temp) == current_symbol){
+        if(two_char_operators.at(temp) == current_symbol && !input_stream.eof()){
             std::stringstream stream;
             stream << temp << current_symbol;
             token = Token(two_char_operator_lookup.at(stream.str()), current_position, {});
@@ -100,8 +103,117 @@ bool Lexer<T>::try_build_operator(){
 }
 
 template<>
+bool Lexer<>::try_build_number(){
+    if(!std::isdigit(static_cast<unsigned char>(current_symbol))){
+        return false;
+    }
+    Position start_position = current_position;
+    uint64_t integer_part = 0;
+    if(current_symbol != '0'){
+        uint64_t previous;
+        integer_part = current_symbol - '0';
+        while(advance_character() && std::isdigit(static_cast<unsigned char>(current_symbol))){
+            previous = integer_part;
+            integer_part = 10 * integer_part + (current_symbol - '0');
+            if(integer_part > INT64_MAX || integer_part < previous){
+                token = Token(TokenType::Error_token, start_position, "Error building number - integer part digit string too long.");
+                return true;
+            }
+        }
+    }
+    else{
+        if(!advance_character()){
+            token = Token(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
+            return true;
+        }
+    }
+
+    if(current_symbol == '.'){
+        uint64_t decimal_part = 0;
+        uint64_t previous;
+        int decimal_places = 0;
+        while(advance_character() && std::isdigit(static_cast<unsigned char>(current_symbol))){
+            previous = decimal_part;
+            decimal_part = 10 * decimal_part + (current_symbol - '0');
+            decimal_places++;
+            if(decimal_part < previous){
+                token = Token(TokenType::Error_token, start_position, "Error building number - floating part digit string too long.");
+                return true;
+            }
+        }
+        if(decimal_places == 0){
+            token = Token(TokenType::Error_token, start_position, "Error building number - floating part does not exist.");
+            return true;
+        }
+        token = Token(TokenType::Floating_literal, start_position, integer_part + static_cast<double>(decimal_part) / pow(10, decimal_places));
+        return true;
+    }
+    
+    token = Token(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
+    return true;
+}
+
+//TODO
+template<typename T>
+void Lexer<T>::skip_whitespace(){
+    if(input_stream.eof())
+        return;
+    while(std::isspace(static_cast<unsigned char>(current_symbol))){
+        if(std::isblank(static_cast<unsigned char>(current_symbol))){
+            if(!advance_character())
+                return;
+            continue;
+        }
+        if(!newline_sequence)
+            detect_newline_sequence();
+        else{
+            for(auto iter = newline_sequence->begin(); iter != newline_sequence->end(); ++iter){
+                advance_character();
+            }
+            if(input_stream.eof())
+                return;
+        }
+    }
+}
+
+template<>
+void Lexer<>::detect_newline_sequence(){
+    std::stringstream s;
+    if(!std::isspace(static_cast<unsigned char>(current_symbol)) && std::isblank(static_cast<unsigned char>(current_symbol))){
+        s << current_symbol;
+        if(!advance_character()){
+            newline_sequence = s.str();
+            return;
+        }
+    }
+    if(!std::isspace(static_cast<unsigned char>(current_symbol)) && std::isblank(static_cast<unsigned char>(current_symbol)) && current_symbol != s.str()[0]){
+        s << current_symbol;
+        advance_character();
+        newline_sequence = s.str();
+        return;
+    }
+    newline_sequence = s.str();
+    return;
+}
+
+template<>
+std::optional<Token> Lexer<>::get_current_token(){
+    return token;
+}
+
+
+//TODO
+template<>
 Token Lexer<>::get_next_token(){
+    skip_whitespace();
+    if(input_stream.eof()){
+        token = Token(TokenType::ETX_token, current_position, "");
+        return *token;
+    }
     if(try_build_operator()){
+        return *token;
+    }
+    if(try_build_number()){
         return *token;
     }
     return Token(TokenType::Error_token, {}, {});
