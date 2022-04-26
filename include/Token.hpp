@@ -58,12 +58,13 @@ struct Position{
     int line, column;
 };
 
+template<typename T = char>
 struct Token{
-    Token(TokenType t, const Position &p, const std::variant<int64_t, double, std::string> &v) : 
-    type(t), position(p), value(v) {};
+    Token(TokenType t, const Position &p, const std::variant<int64_t, double, std::basic_string<T>> &v) : 
+        type(t), position(p), value(v) {};
     TokenType type;
     Position position;
-    std::variant<int64_t, double, std::string> value;
+    std::variant<int64_t, double, std::basic_string<T>> value;
 };
 
 #endif // !TOKEN_HPP
