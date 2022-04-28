@@ -1,8 +1,8 @@
 #include "Lexer.hpp"
 
 
-template<typename T>
-const std::map<std::basic_string<T>, TokenType> Lexer<T>::keyword_lookup{
+template<>
+const std::map<std::basic_string<char>, TokenType> Lexer<char>::keyword_lookup{
     {"and",     TokenType::And},
     {"or",      TokenType::Or},
     {"not",     TokenType::Not},
@@ -21,6 +21,28 @@ const std::map<std::basic_string<T>, TokenType> Lexer<T>::keyword_lookup{
     {"while",   TokenType::While_keywd},
     {"const",   TokenType::Const_keywd},
     {"match",   TokenType::Match_keywd},
+};
+
+template<>
+const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::keyword_lookup{
+    {L"and",     TokenType::And},
+    {L"or",      TokenType::Or},
+    {L"not",     TokenType::Not},
+    {L"true",    TokenType::True},
+    {L"false",   TokenType::False},
+    {L"int",     TokenType::Integer_type},
+    {L"float",   TokenType::Floating_type},
+    {L"str",     TokenType::String_type},
+    {L"file",    TokenType::File_type},
+    {L"bool",    TokenType::Bool_type},
+    {L"void",    TokenType::Void_type},
+    {L"return",  TokenType::Return_keywd},
+    {L"fun",     TokenType::Function_keywd},
+    {L"if",      TokenType::If_keywd},
+    {L"else",    TokenType::Else_keywd},
+    {L"while",   TokenType::While_keywd},
+    {L"const",   TokenType::Const_keywd},
+    {L"match",   TokenType::Match_keywd},
 };
 
 template<typename T>
@@ -52,12 +74,20 @@ const std::map<T, T> Lexer<T>::two_char_operators{
     {'!', '='},
 };
 
-template<typename T>
-const std::map<std::basic_string<T>, TokenType> Lexer<T>::two_char_operator_lookup{
+template<>
+const std::map<std::basic_string<char>, TokenType> Lexer<char>::two_char_operator_lookup{
     {">=",  TokenType::Gte},
     {"<=",  TokenType::Lte},
     {"==",  TokenType::Equals},
     {"!=",  TokenType::Not_equals},
+};
+
+template<>
+const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::two_char_operator_lookup{
+    {L">=",  TokenType::Gte},
+    {L"<=",  TokenType::Lte},
+    {L"==",  TokenType::Equals},
+    {L"!=",  TokenType::Not_equals},
 };
 
 template<typename T>
@@ -75,152 +105,134 @@ const std::map<T, T> Lexer<T>::escapes{
 };
 
 template<typename T>
-const std::optional<Token<T>>& Lexer<T>::get_current_token() const{
-    return token;
-}
-
-template<typename T>
-const Token<T>& Lexer<T>::get_next_token(){
+const Token<T> Lexer<T>::get_next_token(){
     skip_whitespace();
-    if(try_build_etx()){
+    start_position = current_position;
+    if(auto token = try_build_etx()){
         return *token;
     }
-    if(try_build_comment()){
+    if(auto token = try_build_comment()){
         return *token;
     }
-    if(try_build_operator()){
+    if(auto token = try_build_operator()){
         return *token;
     }
-    if(try_build_string()){
+    if(auto token = try_build_string()){
         return *token;
     }
-    if(try_build_number()){
+    if(auto token = try_build_number()){
         return *token;
     }
-    if(try_build_identifier_or_keyword()){
+    if(auto token = try_build_identifier_or_keyword()){
         return *token;
     }
-    token = Token<T>(TokenType::Error_token, current_position, "Illegal character sequence.");
-    return *token;
+    throw TokenizationError("Illegal character sequence.", current_position);
 }
 
 template<typename T>
-bool Lexer<T>::try_build_etx(){
+const std::optional<Token<T>> Lexer<T>::try_build_etx(){
     if(!input_stream.eof())
-        return false;
-    token = Token<T>(TokenType::ETX_token, current_position, "");
-    return true;
+        return std::nullopt;
+    return Token<T>(TokenType::ETX_token, start_position, {});
 }
 
 template<typename T>
-bool Lexer<T>::try_build_operator(){
-    Position start_position = current_position;
-    if(two_char_operators.contains(current_symbol)){
+const std::optional<Token<T>> Lexer<T>::try_build_operator(){
+        if(auto iter = two_char_operators.find(current_symbol); iter != two_char_operators.end()){
         T temp = current_symbol;
-        advance_character();
-        if(two_char_operators.at(temp) == current_symbol && !input_stream.eof()){
+        if(advance_character() && iter->second == current_symbol){
             std::basic_stringstream<T> stream;
             stream << temp << current_symbol;
-            token = Token<T>(two_char_operator_lookup.at(stream.str()), start_position, {});
-            return true;
+            return Token<T>(two_char_operator_lookup.at(stream.str()), start_position, {});
         }
-        else if(single_char_operator_lookup.contains(temp)){
-            token = Token<T>(single_char_operator_lookup.at(temp), start_position, {});
-            return true;
+        else if(auto iter2 = single_char_operator_lookup.find(temp); iter2 != single_char_operator_lookup.end()){
+            return Token<T>(iter2->second, start_position, {});
         }
         else{
-            token = Token<T>(TokenType::Error_token, start_position, "Bad multicharacter operator.");
-            return true;
+            throw TokenizationError("Bad multicharacter operator.", current_position);
         }
     }
-    else if(single_char_operator_lookup.contains(current_symbol)){
-        token = Token<T>(single_char_operator_lookup.at(current_symbol), start_position, {});
+    else if(auto iter3 = single_char_operator_lookup.find(current_symbol); iter3 != single_char_operator_lookup.end()){
         advance_character();
-        return true;
+        return Token<T>(iter3->second, start_position, {});
     }
     else{
-        return false;
+        return std::nullopt;
     }
 }
 
 template<typename T>
-bool Lexer<T>::try_build_number(){
+const std::optional<Token<T>> Lexer<T>::try_build_number(){
     if(!std::isdigit(static_cast<unsigned char>(current_symbol))){
-        return false;
+        return std::nullopt;
     }
-    Position start_position = current_position;
-    uint64_t integer_part = 0;
+        uint64_t integer_part = 0;
     if(current_symbol != '0'){
-        uint64_t previous;
         integer_part = current_symbol - '0';
         while(advance_character() && std::isdigit(static_cast<unsigned char>(current_symbol))){
-            previous = integer_part;
-            integer_part = 10 * integer_part + (current_symbol - '0');
-            if(integer_part > INT64_MAX || integer_part < previous){
-                token = Token<T>(TokenType::Error_token, start_position, "Error building number - integer part digit string too long.");
-                return true;
+            if((std::numeric_limits<int64_t>::max() - (current_symbol - '0')) / double(10) < integer_part){
+                throw TokenizationError("Error building number - integer part digit string too long.", start_position);
             }
+            integer_part = 10 * integer_part + (current_symbol - '0');
         }
     }
-    else{
-        if(!advance_character()){
-            token = Token<T>(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
-            return true;
-        }
+    else if(!advance_character()){
+        return Token<T>(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
+    }
+    else if(std::isdigit(static_cast<unsigned char>(current_symbol))){
+        throw TokenizationError("Error - numeric literal must not start with a zero.", start_position);
+    }
+
+    if(std::isalpha(current_symbol) || current_symbol == '_'){
+        throw TokenizationError("Error - integer numeral ending with character OR identifier starting with a number.", start_position);
     }
 
     if(current_symbol == '.'){
         uint64_t decimal_part = 0;
-        uint64_t previous;
         int decimal_places = 0;
         while(advance_character() && std::isdigit(static_cast<unsigned char>(current_symbol))){
-            previous = decimal_part;
+            if((std::numeric_limits<int64_t>::max() - (current_symbol - '0')) / static_cast<double>(10) < integer_part){
+                throw TokenizationError("Error building number - floating part digit string too long.", start_position);
+            }
             decimal_part = 10 * decimal_part + (current_symbol - '0');
             decimal_places++;
-            if(decimal_part < previous){
-                token = Token<T>(TokenType::Error_token, start_position, "Error building number - floating part digit string too long.");
-                return true;
-            }
         }
         if(decimal_places == 0){
-            token = Token<T>(TokenType::Error_token, start_position, "Error building number - floating part does not exist.");
-            return true;
+            throw TokenizationError("Error building number - floating part does not exist.", start_position);
         }
-        token = Token<T>(TokenType::Floating_literal, start_position, integer_part + static_cast<double>(decimal_part) / pow(10, decimal_places));
-        return true;
+        if(current_symbol == '.' || std::isalpha(current_symbol) || current_symbol == '_'){
+            throw TokenizationError("Error building number - wrong floating point literal format.", current_position);
+        }
+        return Token<T>(TokenType::Floating_literal, start_position, integer_part + static_cast<double>(decimal_part) / pow(10, decimal_places));
     }
     
-    token = Token<T>(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
-    return true;
+    return Token<T>(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
 }
 
 template<typename T>
-bool Lexer<T>::try_build_identifier_or_keyword(){
+const std::optional<Token<T>> Lexer<T>::try_build_identifier_or_keyword(){
     if(!std::isalpha(static_cast<unsigned char>(current_symbol)))
-        return false;
+        return std::nullopt;
     std::basic_stringstream<T> s;
-    Position start_position = current_position;
-    s << current_symbol;
+        s << current_symbol;
     while(advance_character() && (
         std::isalnum(static_cast<unsigned char>(current_symbol)) ||
         current_symbol == '_'
     )){
         s << current_symbol;
     }
-    if(keyword_lookup.contains(s.str())){
-        token = Token<T>(keyword_lookup.at(s.str()), start_position, {});
+    if(auto iter = keyword_lookup.find(s.str()); iter != keyword_lookup.end()){
+        return Token<T>(iter->second, start_position, {});
     }
     else{
-        token = Token<T>(TokenType::Identifier, start_position, s.str());
+        return Token<T>(TokenType::Identifier, start_position, s.str());
     }
-    return true;
 }
 
 template<typename T>
-bool Lexer<T>::try_build_comment(){
+const std::optional<Token<T>> Lexer<T>::try_build_comment(){
     if(current_symbol != '#')
-        return false;
-    Position start_position = current_position;
+        return std::nullopt;
     std::basic_stringstream<T> s;
     while(advance_character() && (
         !std::isspace(static_cast<unsigned char>(current_symbol)) ||
@@ -228,56 +240,50 @@ bool Lexer<T>::try_build_comment(){
     )){
         s << current_symbol;
     }
-    token = Token<T>(TokenType::Comment, start_position, s.str());
-    return true;
+    return Token<T>(TokenType::Comment, start_position, s.str());
 }
 
 template<typename T>
-bool Lexer<T>::try_build_string(){
+const std::optional<Token<T>> Lexer<T>::try_build_string(){
     if(current_symbol != '\"')
-        return false;
-    Position start_position = current_position;
+        return std::nullopt;
     std::basic_stringstream<T> s;
     while(advance_character() && (
-        !std::isspace(static_cast<unsigned char>(current_symbol)) ||
-        std::isblank(static_cast<unsigned char>(current_symbol))
-    )){
+        !std::isspace(static_cast<unsigned char>(current_symbol))   ||
+        std::isblank(static_cast<unsigned char>(current_symbol)))
+        && current_symbol != '\"'){
         if(current_symbol == '\\'){
             if(!advance_character()){
-                token = Token<T>(TokenType::Error_token, current_position, "Error when building string literal - ETX.");
-                return true;
+                throw TokenizationError("Error when building string literal - ETX.", current_position);
             }
-            if(!escapes.contains(current_symbol)){
-                token = Token<T>(TokenType::Error_token, current_position, "Error when building string literal - invalid escaped character.");
-                return true;
+            if(auto iter = escapes.find(current_symbol); iter != escapes.end()){
+                s << iter->second;
             }
-            s << escapes.at(current_symbol);
-        }
-        
-        else if(current_symbol == '\"'){
-            break;
+            else{
+                throw TokenizationError("Error when building string literal - invalid escaped character.", current_position);
+            }
         }
         else{
             s << current_symbol;
         }
     }
     if(current_symbol != '\"'){
-        token = Token<T>(TokenType::Error_token, current_position, "Error when building string literal - newline before ending quotation mark.");
-        return true;
+        throw TokenizationError("Error when building string literal - newline before ending quotation mark.", current_position);
     }
     advance_character();
-    token = Token<T>(TokenType::String_literal, start_position, s.str());
-    return true;
+    return Token<T>(TokenType::String_literal, start_position, s.str());
 }
 
 template<typename T>
-bool Lexer<T>::advance_character(){
-    input_stream >> current_symbol;
-    if(!input_stream.eof()){
+bool Lexer<T>::advance_character(uint64_t number){
+    for(auto i = static_cast<uint64_t>(0); i < number; ++i){
+        input_stream >> current_symbol;
+        if(input_stream.eof()){
+            return false;
+        }
         current_position.column++;
-        return true;
     }
-    return false;
+    return true;
 }
 
 template<typename T>
@@ -338,3 +344,4 @@ void Lexer<T>::feed_position(){
 }
 
 template class Lexer<char>;
+template class Lexer<wchar_t>;
