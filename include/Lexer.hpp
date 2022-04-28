@@ -12,7 +12,7 @@
 #include "Token.hpp"
 
 class TokenizationError : public std::exception {
-    protected:
+    private:
     std::string err_msg;
     Position pos;
     public:
@@ -29,7 +29,7 @@ class Lexer{
 public:
     explicit Lexer(std::basic_istream<T> &in_stream) : current_position({1, 0}), start_position({1, 1}), input_stream(in_stream), newline_sequence(std::nullopt) { advance_character(); input_stream.unsetf(std::ios::skipws); };
     ~Lexer() { input_stream.setf(std::ios::skipws); }
-    const Token<T> get_next_token();
+    Token<T> get_next_token();
 private:
     T current_symbol;
     Position current_position, start_position;
@@ -40,13 +40,18 @@ private:
     static const std::map<std::basic_string<T>, TokenType> two_char_operator_lookup;
     static const std::map<T, T> two_char_operators;
     static const std::map<T, T> escapes;
-    const std::optional<Token<T>> try_build_etx();
-    const std::optional<Token<T>> try_build_operator();
-    const std::optional<Token<T>> try_build_number();
-    const std::optional<Token<T>> try_build_identifier_or_keyword();
-    const std::optional<Token<T>> try_build_comment();
-    const std::optional<Token<T>> try_build_string();
+    std::optional<Token<T>> try_build_etx();
+    std::optional<Token<T>> try_build_operator();
+    std::optional<Token<T>> try_build_number();
+    std::optional<Token<T>> try_build_identifier_or_keyword();
+    std::optional<Token<T>> try_build_comment();
+    std::optional<Token<T>> try_build_string();
     bool advance_character(uint64_t number = 1);
+    bool is_current_digit();
+    bool is_current_alpha();
+    bool is_current_alnum();
+    bool is_current_space();
+    bool is_current_blank();
     void skip_whitespace();
     void consume_newline();
     void detect_newline_sequence();
