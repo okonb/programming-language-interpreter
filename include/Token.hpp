@@ -60,7 +60,7 @@ struct Position{
 
 class TokenTypeValueMismatch : public std::exception {
     public:
-    virtual char const* what() const noexcept {
+    [[nodiscard]] char const* what() const noexcept override {
         return "Error: mismatch between token type and its value.";
     }
 };
@@ -92,4 +92,4 @@ private:
     token_value_t<T> value;
 };
 
-#endif // !TOKEN_HPP
+#endif // TOKEN_HPP

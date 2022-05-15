@@ -142,9 +142,9 @@ std::optional<Token<T>> Lexer<T>::try_build_operator(){
     if(auto iter = two_char_operators.find(current_symbol); iter != two_char_operators.end()){
         T temp = current_symbol;
         if(advance_character() && iter->second == current_symbol){
-            std::basic_stringstream<T> stream;
-            stream << temp << current_symbol;
-            return Token<T>(two_char_operator_lookup.at(stream.str()), start_position, {});
+            std::basic_stringstream<T> s{};
+            s << temp << current_symbol;
+            return Token<T>(two_char_operator_lookup.at(s.str()), start_position, {});
         }
         if(auto iter2 = single_char_operator_lookup.find(temp); iter2 != single_char_operator_lookup.end()){
             return Token<T>(iter2->second, start_position, {});
@@ -212,7 +212,7 @@ std::optional<Token<T>> Lexer<T>::try_build_identifier_or_keyword(){
         return std::nullopt;
     }
 
-    std::basic_stringstream<T> s;
+    std::basic_stringstream<T> s{};
         s << current_symbol;
     while(advance_character() && (is_current_alnum() || current_symbol == '_' )){
         s << current_symbol;
@@ -228,7 +228,7 @@ std::optional<Token<T>> Lexer<T>::try_build_comment(){
     if(current_symbol != '#'){
         return std::nullopt;
     }
-    std::basic_stringstream<T> s;
+    std::basic_stringstream<T> s{};
     while(advance_character() && (!is_current_space() || is_current_blank())){
         s << current_symbol;
     }
@@ -240,7 +240,7 @@ std::optional<Token<T>> Lexer<T>::try_build_string(){
     if(current_symbol != '\"'){
         return std::nullopt;
     }
-    std::basic_stringstream<T> s;
+    std::basic_stringstream<T> s{};
     while(advance_character() && (!is_current_space() || is_current_blank()) && current_symbol != '\"'){
         if(current_symbol == '\\'){
             if(!advance_character()){
@@ -360,7 +360,7 @@ void Lexer<T>::consume_newline(){
 
 template<typename T>
 void Lexer<T>::detect_newline_sequence(){
-    std::basic_stringstream<T> s;
+    std::basic_stringstream<T> s{};
     if(is_current_space() && !is_current_blank()){
         s << current_symbol;
         if(!advance_character()){

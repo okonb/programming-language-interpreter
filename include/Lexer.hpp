@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cmath>
 #include <exception>
+#include <utility>
 #include "Token.hpp"
 
 class TokenizationError : public std::exception {
@@ -16,12 +17,13 @@ class TokenizationError : public std::exception {
     std::string err_msg;
     Position pos;
     public:
-    explicit TokenizationError(const std::string &msg, const Position &p) noexcept :
-        err_msg(msg), pos(p) {}
-    virtual char const* what() const noexcept {
+    template<typename T>
+    explicit TokenizationError(T && msg, const Position &p) noexcept :
+        err_msg(std::forward<T>(msg)), pos(p) {}
+    [[nodiscard]] char const* what() const noexcept override {
         return err_msg.c_str();
     }
-    const Position &get_position() const noexcept { return pos; }
+    [[nodiscard]] const Position &get_position() const noexcept { return pos; }
 };
 
 template<typename T = char>
@@ -58,4 +60,4 @@ private:
     void feed_position();
 };
 
-#endif // !LEXER_HPP
+#endif // LEXER_HPP
