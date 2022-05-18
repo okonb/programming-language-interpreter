@@ -1,7 +1,9 @@
 #ifndef LEXER_HPP
 #define LEXER_HPP
 
-#include <iostream>
+#include "Token.hpp"
+#include "CharType.hpp"
+#include "ILexer.hpp"
 #include <map>
 #include <optional>
 #include <sstream>
@@ -10,28 +12,27 @@
 #include <cmath>
 #include <exception>
 #include <utility>
-#include "Token.hpp"
 
+template<CharType T>
 class TokenizationError : public std::exception {
     private:
-    std::string err_msg;
+    std::basic_string<T> err_msg;
     Position pos;
     public:
-    template<typename T>
-    explicit TokenizationError(T && msg, const Position &p) noexcept :
-        err_msg(std::forward<T>(msg)), pos(p) {}
+    explicit TokenizationError(std::basic_string<T> msg, const Position &p) noexcept :
+        err_msg(msg), pos(p) {}
     [[nodiscard]] char const* what() const noexcept override {
         return err_msg.c_str();
     }
     [[nodiscard]] const Position &get_position() const noexcept { return pos; }
 };
 
-template<typename T = char>
-class Lexer{
+template<CharType T = char>
+class Lexer : public ILexer<T> {
 public:
     explicit Lexer(std::basic_istream<T> &in_stream) : current_position({1, 0}), start_position({1, 1}), input_stream(in_stream), newline_sequence(std::nullopt) { advance_character(); input_stream.unsetf(std::ios::skipws); };
     ~Lexer() { input_stream.setf(std::ios::skipws); }
-    Token<T> get_next_token();
+    Token<T> get_next_token() override;
 private:
     T current_symbol;
     Position current_position, start_position;

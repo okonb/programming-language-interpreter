@@ -1,6 +1,7 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include "CharType.hpp"
 #include <variant>
 #include <cstdint>
 #include <string>
@@ -65,13 +66,13 @@ class TokenTypeValueMismatch : public std::exception {
     }
 };
 
-template<typename T>
+template<CharType T>
 using token_value_t = std::variant<std::monostate, int64_t, double, std::basic_string<T>>;
 
-template<typename T = char>
+template<CharType T = char>
 class Token{
 public:
-    explicit Token(TokenType t, const Position &p, token_value_t<T> v) : 
+    Token(TokenType t, const Position &p, token_value_t<T> v) : 
         type(t), position(p), value(std::move(v)) {
         if( (std::holds_alternative<int64_t>(value) && type != TokenType::Integer_literal) ||
             (std::holds_alternative<double>(value) && type != TokenType::Floating_literal) ||
