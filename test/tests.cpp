@@ -805,19 +805,19 @@ TEST(ParserTest, Function_test1){
   s << "fun testowa(param1:const int, bruh : float) : int {}";
   Lexer lex(s);
   Parser parser(lex);
-  Program program = parser.parse();
-  ASSERT_EQ(program.get_function("testowa").get_name(), "testowa");
-  ASSERT_EQ(program.get_function("testowa").get_type().get_is_const(), false);
-  ASSERT_EQ(program.get_function("testowa").get_type().get_type(), Type::Integer);
-  auto param1 = program.get_function("testowa").get_parameters()[0];
-  ASSERT_EQ(param1.get_name(), "param1");
-  ASSERT_EQ(param1.get_type().get_is_const(), true);
-  ASSERT_EQ(param1.get_type().get_type(), Type::Integer);
-  auto param2 = program.get_function("testowa").get_parameters()[1];
-  ASSERT_EQ(param2.get_name(), "bruh");
-  ASSERT_EQ(param2.get_type().get_is_const(), false);
-  ASSERT_EQ(param2.get_type().get_type(), Type::Floating);
-  ASSERT_EQ(program.get_function("testowa").get_block().size(), 0);
+  auto program = parser.parse();
+  ASSERT_EQ(program->get_function_definitions()->at(0)->get_name(), "testowa");
+  ASSERT_EQ(program->get_function_definitions()->at(0)->get_type()->get_is_const(), false);
+  ASSERT_EQ(program->get_function_definitions()->at(0)->get_type()->get_type(), Type::Integer);
+  auto& param1 = program->get_function_definitions()->at(0)->get_parameters()->at(0);
+  ASSERT_EQ(param1->get_name(), "param1");
+  ASSERT_EQ(param1->get_type()->get_is_const(), true);
+  ASSERT_EQ(param1->get_type()->get_type(), Type::Integer);
+  auto &param2 = program->get_function_definitions()->at(0)->get_parameters()->at(1);
+  ASSERT_EQ(param2->get_name(), "bruh");
+  ASSERT_EQ(param2->get_type()->get_is_const(), false);
+  ASSERT_EQ(param2->get_type()->get_type(), Type::Floating);
+  ASSERT_EQ(program->get_function_definitions()->at(0)->get_block()->size(), 0);
 }
 
 TEST(ParserTest, check_and_advance){
@@ -1019,8 +1019,8 @@ TEST(ParserTest, try_parse_var_def_assign_or_funcall1){
   ASSERT_NO_THROW( expr = dynamic_cast<VarDefinitionInstruction<char>*>(parser.try_parse_var_def_assign_or_funcall().release()));
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_name(), "var");
-  ASSERT_EQ(expr->get_type().get_type(), Type::Integer);
-  ASSERT_EQ(expr->get_type().get_is_const(), true);
+  ASSERT_EQ(expr->get_type()->get_type(), Type::Integer);
+  ASSERT_EQ(expr->get_type()->get_is_const(), true);
   ASSERT_NO_THROW(dynamic_cast<TwoArgExpression<char>*>(expr->get_expression().get()));
 }
 
@@ -1154,7 +1154,7 @@ TEST(ParserTest, try_parse_parenths_and_args1){
   s << "()";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_parenths_and_args().release();;
+  auto expr = parser.try_parse_parenths_and_args().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->size(), 0);
 }
@@ -1165,7 +1165,7 @@ TEST(ParserTest, try_parse_parenths_and_args2){
   s << "(pierwszy, drugi() - 2)";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_parenths_and_args().release();;
+  auto expr = parser.try_parse_parenths_and_args().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->size(), 2);
 }
@@ -1218,7 +1218,7 @@ TEST(ParserTest, try_parse_type_identifier1){
   s << "int";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_type_identifier().release();;
+  auto expr = parser.try_parse_type_identifier().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_is_const(), false);
   ASSERT_EQ(expr->get_type(), Type::Integer);
@@ -1230,7 +1230,7 @@ TEST(ParserTest, try_parse_type_identifier2){
   s << "const file";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_type_identifier().release();;
+  auto expr = parser.try_parse_type_identifier().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_is_const(), true);
   ASSERT_EQ(expr->get_type(), Type::File);
@@ -1243,7 +1243,7 @@ TEST(ParserTest, try_parse_type_identifier_fail){
   s << "constf ile";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_type_identifier().release();;
+  auto expr = parser.try_parse_type_identifier().release();
   ASSERT_EQ(expr, nullptr);
 }
 
@@ -1253,15 +1253,15 @@ TEST(ParserTest, try_parse_parameter_list_definition){
   s << "jeden: const int, dwa: file";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_parameter_list_definition().release();;
+  auto expr = parser.try_parse_parameter_list_definition().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->size(), 2);
-  ASSERT_EQ(expr->at(0).get_name(), "jeden");
-  ASSERT_EQ(expr->at(1).get_name(), "dwa");
-  ASSERT_EQ(expr->at(0).get_type().get_is_const(), true);
-  ASSERT_EQ(expr->at(1).get_type().get_is_const(), false);
-  ASSERT_EQ(expr->at(0).get_type().get_type(), Type::Integer);
-  ASSERT_EQ(expr->at(1).get_type().get_type(), Type::File);
+  ASSERT_EQ(expr->at(0)->get_name(), "jeden");
+  ASSERT_EQ(expr->at(1)->get_name(), "dwa");
+  ASSERT_EQ(expr->at(0)->get_type()->get_is_const(), true);
+  ASSERT_EQ(expr->at(1)->get_type()->get_is_const(), false);
+  ASSERT_EQ(expr->at(0)->get_type()->get_type(), Type::Integer);
+  ASSERT_EQ(expr->at(1)->get_type()->get_type(), Type::File);
 }
 
 TEST(ParserTest, try_parse_match_expression){
@@ -1285,7 +1285,7 @@ TEST(ParserTest, try_parse_pattern1){
   s << "";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_pattern().release();;
+  auto expr = parser.try_parse_pattern().release();
   ASSERT_EQ(expr, nullptr);
 }
 
@@ -1295,7 +1295,7 @@ TEST(ParserTest, try_parse_pattern2){
   s << "11, 2, _";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_pattern().release();;
+  auto expr = parser.try_parse_pattern().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->size(), 3);
   ASSERT_EQ(expr->at(0)->get_expression_type(), ExpressionType::IntegerLiteralExpression);
@@ -1309,7 +1309,7 @@ TEST(ParserTest, try_parse_match_line){
   s << "11, 2, _ : expr";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_match_line().release();;
+  auto expr = parser.try_parse_match_line().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_pattern()->size(), 3);
   ASSERT_EQ(expr->get_pattern()->at(0)->get_expression_type(), ExpressionType::IntegerLiteralExpression);
@@ -1334,7 +1334,7 @@ TEST(ParserTest, try_parse_match_block2){
   s << "{11, 2, _ : expr, 32, 9, _ : expr2}";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto expr = parser.try_parse_match_block().release();;
+  auto expr = parser.try_parse_match_block().release();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->at(0)->get_pattern()->size(), 3);
   ASSERT_EQ(expr->at(0)->get_pattern()->at(0)->get_expression_type(), ExpressionType::IntegerLiteralExpression);

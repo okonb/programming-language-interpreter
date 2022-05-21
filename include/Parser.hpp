@@ -9,24 +9,21 @@
 #include "Expressions.hpp"
 #include "CharType.hpp"
 #include "MatchLine.hpp"
-#include <exception>
+#include <stdexcept>
 #include <vector>
 #include <initializer_list>
-#include <experimental/source_location>
+#include <source_location>
 #include <utility>
 
 
 template<CharType T>
-class UnexpectedTokenException : public std::exception{
+class UnexpectedTokenException : public std::runtime_error{
 public:
     UnexpectedTokenException(const std::basic_string<T> &function_name, const Token<T> &t, const std::initializer_list<TokenType> &types) :
-        function_throwing{function_name}, token{t}, expected_tokens{types} {}
+        std::runtime_error{"expected token in get_expected_token_list()"}, function_throwing{function_name}, token{t}, expected_tokens{types} {}
     const std::basic_string<T> &get_function_throwing_name() const {return function_throwing;}
     const Token<T> &get_received_token() const {return token;}
     const std::vector<TokenType> &get_expected_token_list() const {return expected_tokens;}
-    [[nodiscard]] char const* what() const noexcept override {
-        return "expected token in get_expected_token_list()";
-    }
 private:
     const std::basic_string<T> function_throwing;
     const Token<T> token;
@@ -34,16 +31,13 @@ private:
 };
 
 template<CharType T>
-class SyntaxErrorException : public std::exception{
+class SyntaxErrorException : public std::runtime_error{
 public:
     SyntaxErrorException(const std::basic_string<T> &function_name, const Token<T> &t, const std::basic_string<T> &e) :
-        function_throwing{function_name}, token{t}, expected{e} {}
+        std::runtime_error{"expected production in get_expected_production()"}, function_throwing{function_name}, token{t}, expected{e} {}
     const std::basic_string<T> &get_function_throwing_name() const {return function_throwing;}
     const Token<T> &get_received_token() const {return token;}
     const std::basic_string<T> &get_expected_production() const {return expected;}
-    [[nodiscard]] char const* what() const noexcept override {
-        return "expected production in get_expected_production()";
-    }
 private:
     const std::basic_string<T> function_throwing;
     const Token<T> token;
@@ -53,9 +47,9 @@ private:
 template <CharType T = char>
 class ParserBase{
 public:
-    ParserBase(ILexer<T> &l) : lexer{l}, current_token(l.get_next_token()), function_definitions{} {}
-    bool try_parse_function_definition();
-    std::unique_ptr<std::vector<ParameterDefinition<T>>> try_parse_parameter_list_definition();
+    ParserBase(ILexer<T> &l) : lexer{l}, current_token(l.get_next_token()), function_definitions{std::make_unique<std::vector<std::unique_ptr<FunctionDefinition<T>>>>()} {}
+    std::unique_ptr<FunctionDefinition<T>> try_parse_function_definition();
+    std::unique_ptr<std::vector<std::unique_ptr<ParameterDefinition<T>>>>  try_parse_parameter_list_definition();
     std::unique_ptr<ParameterDefinition<T>> try_parse_parameter_definition();
     std::unique_ptr<TypeIdentifier<T>> try_parse_type_identifier();
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> try_parse_code_block();
@@ -95,20 +89,24 @@ public:
     bool is_current_token_additive_operator() const;
     bool is_current_token_multiplicative_operator() const;
     bool is_current_token_relation_operator() const;
+    Token<T> get_next_token();
 
     ILexer<T> &lexer;
     Token<T> current_token;
-    FunctionDefinitionsMap<T> function_definitions;
+    std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
     Type map_type(TokenType type) const;
     ExpressionType map_expression_type(TokenType type) const;
     ExpressionType map_to_match(ExpressionType type) const;
-    void get_next_token();
     static std::map<TokenType, Type> type_map;
     static std::map<TokenType, ExpressionType> expression_type_map;
     static std::map<ExpressionType, ExpressionType> match_expression_type_map;
 
-    UnexpectedTokenException<T> get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::experimental::source_location &location = std::experimental::source_location::current());
-    SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string<T> &text, const std::experimental::source_location &location = std::experimental::source_location::current());
+    UnexpectedTokenException<T> get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location = std::source_location::current());
+    SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string<T> &text, const std::source_location &location = std::source_location::current());
+    void expect(TokenType type, const std::source_location &location = std::source_location::current());
+    void expect_and_advance(TokenType type, const std::source_location &location = std::source_location::current());
+    template<typename P>
+    void expect_not_null(std::unique_ptr<P> &pointer, const T* err_message, const std::source_location &location = std::source_location::current());
 };
 
 
@@ -116,7 +114,7 @@ template<CharType T = char>
 class Parser : private ParserBase<T>{
 public:
     Parser(ILexer<T> &l) : ParserBase<T>{l} {}
-    Program<T> parse();
+    std::unique_ptr<Program<T>> parse();
 };
 
 

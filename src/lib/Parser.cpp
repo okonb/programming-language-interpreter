@@ -49,70 +49,55 @@ std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_type_ma
 
 // start_symbol = {function_definition};
 template<CharType T>
-Program<T> Parser<T>::parse(){
-    while(this->try_parse_function_definition())
-    ;
-    return Program(std::move(this->function_definitions));
+std::unique_ptr<Program<T>> Parser<T>::parse(){
+    while(auto function_definiton = this->try_parse_function_definition()){
+        this->function_definitions->push_back(std::move(function_definiton));
+    }
+    return std::make_unique<Program<T>>(std::move(this->function_definitions));
 }
 
 // function_definition = Function_keywd, Identifier, Opening_parenth, parameter_list_definition, Closing_parenth,
 //                       Colon, (type_identifier | Void_type), code_block;
 template<CharType T>
-bool ParserBase<T>::try_parse_function_definition(){
+std::unique_ptr<FunctionDefinition<T>> ParserBase<T>::try_parse_function_definition(){
     if(!check_and_advance(TokenType::Function_keywd)){
-        return false;
+        return nullptr;
     }
-    if(!is_current_token_of_type(TokenType::Identifier)){
-        throw get_unexpected_token_exception({TokenType::Identifier});
-    }
+
+    expect(TokenType::Identifier);
     const std::basic_string<T> function_name = std::get<std::basic_string<T>>(current_token.get_value());
-    if(function_definitions.contains(function_name)){
-        throw get_syntax_error_exception("function redefinition");
-    }
+
     get_next_token();
-    if(!check_and_advance(TokenType::Opening_parenth)){
-        throw get_unexpected_token_exception({TokenType::Opening_parenth});
-    }
+    
+    expect_and_advance(TokenType::Opening_parenth);
 
     auto parameter_list = try_parse_parameter_list_definition();
 
-    if(!check_and_advance(TokenType::Closing_parenth)){
-        throw get_unexpected_token_exception({TokenType::Closing_parenth});
-    }
-    if(!check_and_advance(TokenType::Colon)){
-        throw get_unexpected_token_exception({TokenType::Colon});
-    }
+    expect_and_advance(TokenType::Closing_parenth);
+    expect_and_advance(TokenType::Colon);
 
     auto function_type = try_parse_type_identifier();
-    if(!function_type){
-        throw get_syntax_error_exception("type_identifier");
-    }
+    expect_not_null(function_type, "type_identifier");
 
     auto block = try_parse_code_block();
-    if(!block){
-        throw get_syntax_error_exception("code_block");
-    }
+    expect_not_null(block, "code_block");
 
-    function_definitions.insert(std::make_pair(function_name, FunctionDefinition<T>(function_name, *function_type, *parameter_list, *block)));
-
-    return true;
+    return std::make_unique<FunctionDefinition<T>>(function_name, std::move(function_type), std::move(parameter_list), std::move(block));
 }
 
 // parameter_list_definition = [parameter_definition, {Comma, parameter_definition}];
 template<CharType T>
-std::unique_ptr<std::vector<ParameterDefinition<T>>> ParserBase<T>::try_parse_parameter_list_definition(){
+std::unique_ptr<std::vector<std::unique_ptr<ParameterDefinition<T>>>> ParserBase<T>::try_parse_parameter_list_definition(){
     auto parameter = try_parse_parameter_definition();
-    auto parameter_list = std::make_unique<std::vector<ParameterDefinition<T>>>();
+    auto parameter_list = std::make_unique<std::vector<std::unique_ptr<ParameterDefinition<T>>>>();
     if(!parameter){
         return parameter_list;
     }
-    parameter_list->push_back(*parameter);
+    parameter_list->push_back(std::move(parameter));
     while(check_and_advance(TokenType::Comma)){
         parameter = try_parse_parameter_definition();
-        if(!parameter){
-            throw get_syntax_error_exception("parameter_definition");
-        }
-        parameter_list->push_back(*parameter);
+        expect_not_null(parameter, "parameter_definition");
+        parameter_list->push_back(std::move(parameter));
     }
     return parameter_list;
 }
@@ -123,16 +108,16 @@ std::unique_ptr<ParameterDefinition<T>> ParserBase<T>::try_parse_parameter_defin
     if(!is_current_token_of_type(TokenType::Identifier)){
         return nullptr;
     }
-    auto parameter_name = std::get<std::basic_string<T>>(current_token.get_value());
+    auto parameter_name = std::get<std::basic_string<T>>(current_token.get_value());    //funkcja szablonowa
     get_next_token();
-    if(!check_and_advance(TokenType::Colon)){
-        throw get_unexpected_token_exception({TokenType::Colon});
-    }
+
+    expect_and_advance(TokenType::Colon);
+
     auto parameter_type = try_parse_type_identifier();
     if(!parameter_type || parameter_type->get_type() == Type::Void){
         throw get_syntax_error_exception("type_identifier");
     }
-    return std::make_unique<ParameterDefinition<T>>(*parameter_type, parameter_name);
+    return std::make_unique<ParameterDefinition<T>>(std::move(parameter_type), parameter_name);
 }
 
 template<CharType T>
@@ -162,11 +147,11 @@ std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> ParserBase<T>::tr
     }
     auto instructions = std::make_unique<std::vector<std::unique_ptr<IInstruction<T>>>>();
     while(auto stmt_or_ctrl = try_parse_statement_or_control_block()){
-        instructions->emplace_back(std::move(stmt_or_ctrl));
+        instructions->push_back(std::move(stmt_or_ctrl));
     }
-    if(!check_and_advance(TokenType::Closing_curly)){
-        throw get_unexpected_token_exception({TokenType::Closing_curly});
-    }
+
+    expect_and_advance(TokenType::Closing_curly);
+
     return instructions;
 }
 
@@ -188,15 +173,11 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_statement_or_control_b
 template<CharType T>
 std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_statement(){
     if(auto var_def_assign_or_funcall = try_parse_var_def_assign_or_funcall()){
-        if(!check_and_advance(TokenType::Semicolon)){
-            throw get_unexpected_token_exception({TokenType::Semicolon});
-        }
+        expect_and_advance(TokenType::Semicolon);
         return var_def_assign_or_funcall;
     }
     else if(auto return_statement = try_parse_return_statement()){
-        if(!check_and_advance(TokenType::Semicolon)){
-            throw get_unexpected_token_exception({TokenType::Semicolon});
-        }
+        expect_and_advance(TokenType::Semicolon);
         return return_statement;
     }
     return nullptr;
@@ -220,23 +201,21 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_var_def_assign_or_func
         is_var_def = true;
         type = try_parse_type_identifier();
         if(!type || type->get_type() == Type::Void){
-            throw get_syntax_error_exception("type_identifier");;
+            throw get_syntax_error_exception("type_identifier");
         }
     }
-    if(!check_and_advance(TokenType::Assign)){
-        throw get_unexpected_token_exception({TokenType::Assign});
-    }
+
+    expect_and_advance(TokenType::Assign);
 
     auto rest = try_parse_expression();
     if(!rest){
         rest = try_parse_match_operation();
     }
 
-    if(!rest){
-        throw get_syntax_error_exception("expression");
-    }
+    expect_not_null(rest, "expression");
+
     if(is_var_def){
-        return std::make_unique<VarDefinitionInstruction<T>>(*type, name, std::move(rest));
+        return std::make_unique<VarDefinitionInstruction<T>>(type, name, std::move(rest));
     }
     return std::make_unique<AssignmentInstruction<T>>(name, std::move(rest));
 }
@@ -248,9 +227,9 @@ std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> ParserBase<T>::try
         return nullptr;
     }
     auto arguments = try_parse_argument_list();
-    if(!check_and_advance(TokenType::Closing_parenth)){
-        throw get_unexpected_token_exception({TokenType::Closing_parenth});
-    }
+
+    expect_and_advance(TokenType::Closing_parenth);
+
     return arguments;
 }
 
@@ -262,13 +241,12 @@ std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> ParserBase<T>::try
     if(!argument){
         return arguments;
     }
-    arguments->emplace_back(std::move(argument));
+    arguments->push_back(std::move(argument));
     while(check_and_advance(TokenType::Comma)){
         argument = try_parse_expression();
-        if(!argument){
-            throw get_syntax_error_exception("expression");
-        }
-        arguments->emplace_back(std::move(argument));
+        expect_not_null(argument, "expression");
+
+        arguments->push_back(std::move(argument));
     }
     return arguments;
 }
@@ -295,13 +273,11 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_if_block(){
         return nullptr;
     }
     auto condition = try_parse_condition();
-    if(!condition){
-        throw get_syntax_error_exception("condition");
-    }
+    expect_not_null(condition, "condition");
+
     auto code_block = try_parse_code_block();
-    if(!code_block){
-        throw get_syntax_error_exception("code_block");
-    }
+    expect_not_null(code_block, "code_block");
+
     auto else_block = try_parse_else_block();
     return std::make_unique<IfInstruction<T>>(std::move(condition), std::move(code_block), std::move(else_block));
 }
@@ -316,9 +292,8 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_else_block(){
         return if_st;
     }
     auto code_block = try_parse_code_block();
-    if(!code_block){
-        throw get_syntax_error_exception("code_block");
-    }
+    expect_not_null(code_block, "code_block");
+
     return std::make_unique<IfInstruction<T>>(nullptr, std::move(code_block), nullptr);
 }
 
@@ -329,13 +304,11 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_while_block(){
         return nullptr;
     }
     auto condition = try_parse_condition();
-    if(!condition){
-        throw get_syntax_error_exception("condition");
-    }
+    expect_not_null(condition, "condition");
+
     auto code_block = try_parse_code_block();
-    if(!code_block){
-        throw get_syntax_error_exception("code_block");
-    }
+    expect_not_null(code_block, "code_block");
+
     return std::make_unique<WhileInstruction<T>>(std::move(condition), std::move(code_block));
 }
 
@@ -346,12 +319,11 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_condition(){
         return nullptr;
     }
     auto expression = try_parse_expression();
-    if(!expression){
-        throw get_syntax_error_exception("expression");
-    }
-    if(!check_and_advance(TokenType::Closing_parenth)){
-        throw get_unexpected_token_exception({TokenType::Closing_parenth});
-    }
+    expect_not_null(expression, "expression");
+
+
+    expect_and_advance(TokenType::Closing_parenth);
+
     return expression;
 }
 
@@ -364,9 +336,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_expression(){
     }
     while(check_and_advance(TokenType::Or)){
         auto logic_factor_r = try_parse_logic_factor();
-        if(!logic_factor_r){
-            throw get_syntax_error_exception("logic_factor");
-        }
+        expect_not_null(logic_factor_r, "logic_factor");
+
         logic_factor_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::OrExpression, std::move(logic_factor_l), std::move(logic_factor_r));
     }
     return logic_factor_l;
@@ -381,9 +352,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_logic_factor(){
     }
     while(check_and_advance(TokenType::And)){
         auto relation_r = try_parse_relation();
-        if(!relation_r){
-            throw get_syntax_error_exception("relation");
-        }
+        expect_not_null(relation_r, "relation");
+
         relation_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::AndExpression, std::move(relation_l), std::move(relation_r));
     }
     return relation_l;
@@ -404,9 +374,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
         auto type = map_expression_type(current_token.get_type());
         get_next_token();
         auto math_expression_r = try_parse_math_expression();
-        if(!math_expression_r){
-            throw get_syntax_error_exception("math_expression");
-        }
+        expect_not_null(math_expression_r, "math_expression");
+
         math_expression_l = std::make_unique<TwoArgExpression<T>>(type, std::move(math_expression_l), std::move(math_expression_r));
     }
     if(negate){
@@ -426,9 +395,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_math_expression(){
         auto type = map_expression_type(current_token.get_type());
         get_next_token();
         auto factor_r = try_parse_factor();
-        if(!factor_r){
-            throw get_syntax_error_exception("factor");
-        }
+        expect_not_null(factor_r, "factor");
+
         factor_l = std::make_unique<TwoArgExpression<T>>(type, std::move(factor_l), std::move(factor_r));
     }
 
@@ -446,9 +414,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
         auto type = map_expression_type(current_token.get_type());
         get_next_token();
         auto term_r = try_parse_term();
-        if(!term_r){
-            throw get_syntax_error_exception("term");
-        }
+        expect_not_null(term_r, "term");
+
         term_l = std::make_unique<TwoArgExpression<T>>(type, std::move(term_l), std::move(term_r));
     }
 
@@ -499,9 +466,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_expression(){
     }
     while(check_and_advance(TokenType::Or)){
         auto logic_factor_r = try_parse_match_logic_factor();
-        if(!logic_factor_r){
-            throw get_syntax_error_exception("match_logic_factor");
-        }
+        expect_not_null(logic_factor_r, "match_logic_factor");
+
         logic_factor_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::MatchOrExpression, std::move(logic_factor_l), std::move(logic_factor_r));
     }
     return logic_factor_l;
@@ -516,9 +482,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_logic_factor(){
     }
     while(check_and_advance(TokenType::And)){
         auto relation_r = try_parse_match_relation();
-        if(!relation_r){
-            throw get_syntax_error_exception("match_relation");
-        }
+        expect_not_null(relation_r, "match_relation");
+
         relation_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::MatchAndExpression, std::move(relation_l), std::move(relation_r));
     }
     return relation_l;
@@ -534,9 +499,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_relation(){
     type = map_to_match(type);
     get_next_token();
     auto math_expression = try_parse_match_math_expression();
-    if(!math_expression){
-            throw get_syntax_error_exception("match_math_expression");
-    }
+    expect_not_null(math_expression, "match_math_expression");
+
     return std::make_unique<SingleArgExpression<T>>(type, std::move(math_expression));
 }
 
@@ -552,9 +516,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_math_expression()
         type = map_to_match(type);
         get_next_token();
         auto factor_r = try_parse_match_factor();
-        if(!factor_r){
-            throw get_syntax_error_exception("match_factor");
-        }
+        expect_not_null(factor_r, "match_factor");
+
         factor_l = std::make_unique<TwoArgExpression<T>>(type, std::move(factor_l), std::move(factor_r));
     }
 
@@ -573,9 +536,8 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
         type = map_to_match(type);
         get_next_token();
         auto term_r = try_parse_match_term();
-        if(!term_r){
-            throw get_syntax_error_exception("match_term");
-        }
+        expect_not_null(term_r, "match_term");
+
         term_l = std::make_unique<TwoArgExpression<T>>(type, std::move(term_l), std::move(term_r));
     }
     return term_l;
@@ -677,16 +639,14 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_operation(){
         return nullptr;
     }
     auto args = try_parse_parenths_and_args();
-    if(!args){
-        throw get_syntax_error_exception("parenths_and_args");
-    }
+    expect_not_null(args, "parenths_and_args");
+
     if(args->size() < 1){
         throw get_syntax_error_exception(">0 arguments");
     }
     auto match_block = try_parse_match_block();
-    if(!match_block){
-        throw get_syntax_error_exception("match_block");
-    }
+    expect_not_null(match_block, "match_block");
+
     return std::make_unique<MatchOperation<T>>(std::move(args), std::move(match_block));
 }
 
@@ -698,20 +658,18 @@ std::unique_ptr<std::vector<std::unique_ptr<MatchLine<T>>>> ParserBase<T>::try_p
     }
     auto match_block = std::make_unique<std::vector<std::unique_ptr<MatchLine<T>>>>();
     auto match_line = try_parse_match_line();
-    if(!match_line){
-        throw get_syntax_error_exception("match_line");
-    }
-    match_block->emplace_back(std::move(match_line));
+    expect_not_null(match_line, "match_line");
+
+    match_block->push_back(std::move(match_line));
     while(check_and_advance(TokenType::Comma)){
         match_line = try_parse_match_line();
-        if(!match_line){
-            throw get_syntax_error_exception("match_line");
-        }
-        match_block->emplace_back(std::move(match_line));
+        expect_not_null(match_line, "match_line");
+
+        match_block->push_back(std::move(match_line));
     }
-    if(!check_and_advance(TokenType::Closing_curly)){
-        throw get_unexpected_token_exception({TokenType::Closing_curly});
-    }
+
+    expect_and_advance(TokenType::Closing_curly);
+
     return match_block;
 }
 
@@ -722,13 +680,12 @@ std::unique_ptr<MatchLine<T>> ParserBase<T>::try_parse_match_line(){
     if(!pattern){
         return nullptr;
     }
-    if(!check_and_advance(TokenType::Colon)){
-        throw get_unexpected_token_exception({TokenType::Colon});
-    }
+
+    expect_and_advance(TokenType::Colon);
+
     auto expression = try_parse_expression();
-    if(!expression){
-        throw get_syntax_error_exception("expression");
-    }
+    expect_not_null(expression, "expression");
+
     return std::make_unique<MatchLine<T>>(std::move(pattern), std::move(expression));
 
 }
@@ -741,13 +698,12 @@ std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> ParserBase<T>::try
         return nullptr;
     }
     auto pattern = std::make_unique<std::vector<std::unique_ptr<IExpression<T>>>>();
-    pattern->emplace_back(std::move(pattern_elem));
+    pattern->push_back(std::move(pattern_elem));
     while(check_and_advance(TokenType::Comma)){
         pattern_elem = try_parse_pattern_element();
-        if(!pattern_elem){
-            throw get_syntax_error_exception("pattern_element");
-        }
-        pattern->emplace_back(std::move(pattern_elem));
+        expect_not_null(pattern_elem, "pattern_element");
+
+        pattern->push_back(std::move(pattern_elem));
     }
     return pattern;
 }
@@ -769,12 +725,12 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
 
 
 template<CharType T>
-UnexpectedTokenException<T> ParserBase<T>::get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::experimental::source_location &location){
+UnexpectedTokenException<T> ParserBase<T>::get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location){
     return UnexpectedTokenException<T>(location.function_name(), current_token, types);
 }
 
 template<CharType T>
-SyntaxErrorException<T> ParserBase<T>::get_syntax_error_exception(const std::basic_string<T> &text, const std::experimental::source_location &location){
+SyntaxErrorException<T> ParserBase<T>::get_syntax_error_exception(const std::basic_string<T> &text, const std::source_location &location){
     return SyntaxErrorException<T>(location.function_name(), current_token, text);
 }
 
@@ -799,8 +755,8 @@ bool ParserBase<T>::is_current_token_a_type() const{
 }
 
 template<CharType T>
-void ParserBase<T>::get_next_token(){
-    current_token = lexer.get_next_token();
+Token<T> ParserBase<T>::get_next_token(){
+    return current_token = lexer.get_next_token();
 }
 
 template<CharType T>
@@ -839,6 +795,27 @@ bool ParserBase<T>::check_and_advance(TokenType type){
     }
     get_next_token();
     return true;
+}
+
+template<CharType T>
+void ParserBase<T>::expect(TokenType type, const std::source_location &location){
+    if(!is_current_token_of_type(type)){
+        throw get_unexpected_token_exception({type}, location);
+    }
+}
+
+template<CharType T>
+void ParserBase<T>::expect_and_advance(TokenType type, const std::source_location &location){
+    if(!check_and_advance(type)){
+        throw get_unexpected_token_exception({type}, location);
+    }
+}
+template<CharType T>
+template<typename P>
+void ParserBase<T>::expect_not_null(std::unique_ptr<P> &pointer, const T* err_message, const std::source_location &location){
+    if(!pointer){
+        throw get_syntax_error_exception(err_message, location);
+    }
 }
 
 template class ParserBase<char>;

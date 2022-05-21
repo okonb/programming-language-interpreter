@@ -92,7 +92,7 @@ int main(){
     CommentFilterLexer<char> filered_lex{lex};
     Parser parser(filered_lex);
     try{
-        parser.parse().print_self(std::cout);
+        parser.parse()->print_self(std::cout);
     }
     catch(UnexpectedTokenException<char> &e){
         std::cerr << e.what();

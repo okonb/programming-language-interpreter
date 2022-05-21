@@ -5,9 +5,15 @@
 #include <variant>
 #include <cstdint>
 #include <string>
-#include <exception>
+#include <stdexcept>
 
 enum class TokenType{
+    ETX_token,
+    Integer_literal,
+    Floating_literal,
+    String_literal,
+    Identifier,
+    Comment,
     Opening_parenth,
     Closing_parenth,
     Opening_curly,
@@ -47,23 +53,15 @@ enum class TokenType{
     While_keywd,
     Const_keywd,
     Match_keywd,
-    Integer_literal,
-    Floating_literal,
-    String_literal,
-    Identifier,
-    Comment,
-    ETX_token,
 };
 
 struct Position{
     uint64_t line, column;
 };
 
-class TokenTypeValueMismatch : public std::exception {
-    public:
-    [[nodiscard]] char const* what() const noexcept override {
-        return "Error: mismatch between token type and its value.";
-    }
+class TokenTypeValueMismatch : public std::runtime_error {
+public:
+    TokenTypeValueMismatch() : std::runtime_error{"Error: mismatch between token type and its value."} {}
 };
 
 template<CharType T>

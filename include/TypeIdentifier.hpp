@@ -1,18 +1,16 @@
 #ifndef TYPE_IDENTIFIER_HPP
 #define TYPE_IDENTIFIER_HPP
 
-#include <exception>
+#include <stdexcept>
 #include <map>
 #include <string>
 #include <sstream>
 #include "CharType.hpp"
 
 
-class ConstVoidTypeException : public std::exception {
-    public:
-    [[nodiscard]] char const* what() const noexcept override {
-        return "Error: non-returning function marked as const.";
-    }
+class ConstVoidTypeException : public std::runtime_error {
+public:
+    ConstVoidTypeException() : std::runtime_error{"Error: non-returning function marked as const."} {}
 };
 
 enum class Type{

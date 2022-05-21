@@ -10,17 +10,17 @@
 template<CharType T = char>
 class ParameterDefinition : public ISelfPrintable<T>{
 public:
-    explicit ParameterDefinition(const TypeIdentifier<T> &t, const std::basic_string<T> &n) :
-        type{t}, name{n} {}
+    explicit ParameterDefinition(std::unique_ptr<TypeIdentifier<T>> t, const std::basic_string<T> &n) :
+        type{std::move(t)}, name{n} {}
     
-    const TypeIdentifier<T> &get_type() const {return type;}
+    const std::unique_ptr<TypeIdentifier<T>> &get_type() const {return type;}
     const std::basic_string<T> &get_name() const {return name;}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
-        stream << "ParameterDefinition " << get_name() << " : " << type.get_str_representation();
+        stream << "ParameterDefinition " << get_name() << " : " << type->get_str_representation();
     }
 private:
-    TypeIdentifier<T> type;
+    std::unique_ptr<TypeIdentifier<T>> type;
     std::basic_string<T> name;
 };
 

@@ -48,18 +48,18 @@ private:
 template<CharType T>
 class VarDefinitionInstruction : public IInstruction<T>{
 public:
-    VarDefinitionInstruction(const TypeIdentifier<T> &t, const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e) :
-        type{t}, name{n}, expression(std::move(e)) {}
+    VarDefinitionInstruction(std::unique_ptr<TypeIdentifier<T>> &t, const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e) :
+        type{std::move(t)}, name{n}, expression(std::move(e)) {}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
-        stream << "VarDefinitionInstruction: " << name << " : " << type.get_str_representation() << " = \n";
+        stream << "VarDefinitionInstruction: " << name << " : " << type->get_str_representation() << " = \n";
         expression->print_self(stream, level + 1);
     }
-    const TypeIdentifier<T> &get_type() const {return type;}
+    const std::unique_ptr<TypeIdentifier<T>> &get_type() const {return type;}
     const std::basic_string<T> &get_name() const {return name;}
     std::unique_ptr<IExpression<T>> const &get_expression() const {return expression;}
 private:
-    TypeIdentifier<T> type;
+    std::unique_ptr<TypeIdentifier<T>> type;
     std::basic_string<T> name;
     std::unique_ptr<IExpression<T>> expression;
 };

@@ -10,21 +10,18 @@
 #include <cctype>
 #include <cstdint>
 #include <cmath>
-#include <exception>
+#include <stdexcept>
 #include <utility>
 
 template<CharType T>
-class TokenizationError : public std::exception {
-    private:
-    std::basic_string<T> err_msg;
-    Position pos;
-    public:
+class TokenizationError : public std::runtime_error {
+public:
     explicit TokenizationError(std::basic_string<T> msg, const Position &p) noexcept :
-        err_msg(msg), pos(p) {}
-    [[nodiscard]] char const* what() const noexcept override {
-        return err_msg.c_str();
-    }
+        std::runtime_error{msg}, pos(p) {}
+
     [[nodiscard]] const Position &get_position() const noexcept { return pos; }
+private:
+    Position pos;
 };
 
 template<CharType T = char>
