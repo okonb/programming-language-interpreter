@@ -2,6 +2,7 @@
 #define IEXPRESSION_HPP
 
 #include "CharType.hpp"
+#include "IInstruction.hpp"
 #include <map>
 #include <string>
 
@@ -44,7 +45,8 @@ enum class ExpressionType{
     FunctionCallExpression,
     IdentifierExpression,
     MatchExpression,
-    UnderscoreExpression
+    UnderscoreExpression,
+    BooleanLiteralExpression
 };
 
 template<CharType T>
@@ -52,7 +54,7 @@ class IExpression : public IInstruction<T> {
 public:
     IExpression(ExpressionType t) : type{t} {}
     const std::basic_string<T> &get_string_repr() const {return expression_string_map.at(type);}
-    ExpressionType get_expression_type() const{return type;}
+    ExpressionType get_expression_type() const {return type;}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
         stream << this->get_string_repr() << "\n";

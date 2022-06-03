@@ -219,6 +219,9 @@ std::optional<Token<T>> Lexer<T>::try_build_identifier_or_keyword(){
         s << current_symbol;
     }
     if(auto iter = keyword_lookup.find(s.str()); iter != keyword_lookup.end()){
+        if(iter->second == TokenType::True || iter->second == TokenType::False){
+            Token<T>(TokenType::Boolean_literal, start_position, iter->second == TokenType::True);
+        }
         return Token<T>(iter->second, start_position, {});
     }
     return Token<T>(TokenType::Identifier, start_position, s.str());

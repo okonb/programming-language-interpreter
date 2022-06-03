@@ -1,11 +1,24 @@
 #ifndef INSTRUCTION_HPP
 #define INSTRUCTION_HPP
 
+
+#include "CharType.hpp"
+template<CharType T>
+class IInstruction;
+
+template<CharType T>
+class IExpression;
+
+template<CharType T>
+class IVisitor;
+
+
 #include "IInstruction.hpp"
 #include "Expressions.hpp"
 #include "TypeIdentifier.hpp"
-#include "CharType.hpp"
+#include "IVisitor.hpp"
 #include <memory>
+#include <vector>
 
 template<CharType T>
 class ReturnInstruction : public IInstruction<T>{
@@ -24,6 +37,7 @@ public:
         }
     }
     std::unique_ptr<IExpression<T>> const &get_expression(){return expression;}
+    void accept(IVisitor<T> &visitor) override{ visitor.visit(*this); }
 private:
     std::unique_ptr<IExpression<T>> expression;
 };
@@ -40,6 +54,7 @@ public:
     }
     const std::basic_string<T> &get_name() const {return name;}
     const std::unique_ptr<IExpression<T>> &get_expression() const {return expression;}
+    void accept(IVisitor<T> &visitor) override{ visitor.visit(*this); }
 private:
     std::basic_string<T> name;
     std::unique_ptr<IExpression<T>> expression;
@@ -58,6 +73,7 @@ public:
     const std::unique_ptr<TypeIdentifier<T>> &get_type() const {return type;}
     const std::basic_string<T> &get_name() const {return name;}
     std::unique_ptr<IExpression<T>> const &get_expression() const {return expression;}
+    void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
     std::unique_ptr<TypeIdentifier<T>> type;
     std::basic_string<T> name;
@@ -92,6 +108,7 @@ public:
     std::unique_ptr<IExpression<T>> const &get_condition() const {return condition;}
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> const &get_code_block() const {return code_block;}
     std::unique_ptr<IInstruction<T>> const &get_else_block() const {return else_block;}
+    void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
     std::unique_ptr<IExpression<T>> condition;
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> code_block;
@@ -117,6 +134,7 @@ public:
     }
     std::unique_ptr<IExpression<T>> const &get_condition() const {return condition;}
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> const &get_code_block() const {return code_block;}
+    void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
     std::unique_ptr<IExpression<T>> condition;
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> code_block;

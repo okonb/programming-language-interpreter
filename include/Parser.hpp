@@ -114,7 +114,7 @@ template<CharType T = char>
 class Parser : private ParserBase<T>{
 public:
     Parser(ILexer<T> &l) : ParserBase<T>{l} {}
-    std::unique_ptr<Program<T>> parse();
+    std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> parse();
 };
 
 

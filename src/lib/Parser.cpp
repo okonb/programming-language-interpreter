@@ -49,11 +49,11 @@ std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_type_ma
 
 // start_symbol = {function_definition};
 template<CharType T>
-std::unique_ptr<Program<T>> Parser<T>::parse(){
+std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> Parser<T>::parse(){
     while(auto function_definiton = this->try_parse_function_definition()){
         this->function_definitions->push_back(std::move(function_definiton));
     }
-    return std::make_unique<Program<T>>(std::move(this->function_definitions));
+    return std::move(this->function_definitions);
 }
 
 // function_definition = Function_keywd, Identifier, Opening_parenth, parameter_list_definition, Closing_parenth,
@@ -578,7 +578,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
     return nullptr;
 }
 
-// literal = Integer_literal | Floating_literal | String_literal;
+// literal = Integer_literal | Floating_literal | String_literal | Boolean_literal;
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_literal(){
     if(current_token.get_type() == TokenType::Integer_literal){
@@ -595,6 +595,11 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_literal(){
         auto value = std::get<std::basic_string<T>>(current_token.get_value());
         get_next_token();
         return std::make_unique<StringLiteralExpression<T>>(value);
+    }
+    if(current_token.get_type() == TokenType::Boolean_literal){
+        auto value = std::get<bool>(current_token.get_value());
+        get_next_token();
+        return std::make_unique<BooleanLiteralExpression<T>>(value);
     }
     return nullptr;
 }
@@ -718,7 +723,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
         return expr;
     }
     if(check_and_advance(TokenType::Underscore)){
-        return std::make_unique<IExpression<T>>(ExpressionType::UnderscoreExpression);
+        return std::make_unique<SingleArgExpression<T>>(ExpressionType::UnderscoreExpression, nullptr);
     }
     return nullptr;
 }
@@ -735,22 +740,22 @@ SyntaxErrorException<T> ParserBase<T>::get_syntax_error_exception(const std::bas
 }
 
 template<CharType T>
-Type ParserBase<T>::map_type(TokenType type) const{
+Type ParserBase<T>::map_type(TokenType type) const {
     return type_map.at(type);
 }
 
 template<CharType T>
-ExpressionType ParserBase<T>::map_expression_type(TokenType type) const{
+ExpressionType ParserBase<T>::map_expression_type(TokenType type) const {
     return expression_type_map.at(type);
 }
 
 template<CharType T>
-ExpressionType ParserBase<T>::map_to_match(ExpressionType type) const{
+ExpressionType ParserBase<T>::map_to_match(ExpressionType type) const {
     return match_expression_type_map.at(type);
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_a_type() const{
+bool ParserBase<T>::is_current_token_a_type() const {
     return type_map.contains(current_token.get_type());
 }
 
@@ -760,26 +765,26 @@ Token<T> ParserBase<T>::get_next_token(){
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_of_type(TokenType type) const{
+bool ParserBase<T>::is_current_token_of_type(TokenType type) const {
     return current_token.get_type() == type;
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_additive_operator() const{
+bool ParserBase<T>::is_current_token_additive_operator() const {
     return (current_token.get_type() == TokenType::Plus ||
             current_token.get_type() == TokenType::Minus ||
             current_token.get_type() == TokenType::String_concat);
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_multiplicative_operator() const{
+bool ParserBase<T>::is_current_token_multiplicative_operator() const {
     return (current_token.get_type() == TokenType::Multiplication ||
             current_token.get_type() == TokenType::Division ||
             current_token.get_type() == TokenType::Modulo);
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_relation_operator() const{
+bool ParserBase<T>::is_current_token_relation_operator() const {
     return (current_token.get_type() == TokenType::Gt ||
             current_token.get_type() == TokenType::Gte ||
             current_token.get_type() == TokenType::Lt ||

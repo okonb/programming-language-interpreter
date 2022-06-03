@@ -3,4 +3,4 @@ build/**
 gramatyka.txt
 Testing/Temporary/CTestCostData.txt
 Testing/Temporary/LastTest.log
-.vscode/tasks.json
+.vscode/**

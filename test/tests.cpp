@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Lexer.hpp"
 #include "Parser.hpp"
+#include "CommentFilterLexer.hpp"
 
 // Lexer tests
 
@@ -335,6 +336,13 @@ TEST(LexerTest, Integer_literal_test2){
   EXPECT_EQ(value, 420);
 }
 
+TEST(LexerTest, Illegal_char_sequence){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << "\\";
+  Lexer lex(s);
+  ASSERT_THROW(Token token = lex.get_next_token(), TokenizationError<char>);
+}
 TEST(LexerTest, Integer_literal_test3){
   std::stringstream s;
   s.unsetf(std::ios::skipws);
@@ -372,6 +380,14 @@ TEST(LexerTest, Integer_literal_test6){
   s << "\n  18446744073709551615 7544";
   Lexer lex(s);
   ASSERT_THROW({Token token = lex.get_next_token();}, TokenizationError<char>);
+}
+
+TEST(LexerTest, Integer_literal_test7){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << "1234567898245746872275453875687458725832587469875657";
+  Lexer lex(s);
+  ASSERT_THROW(Token token = lex.get_next_token(), TokenizationError<char>);
 }
 
 TEST(LexerTest, Floating_literal_test1){
@@ -433,6 +449,14 @@ TEST(LexerTest, Floating_literal_test6){
   s << "1O3";
   Lexer lex(s);
   ASSERT_THROW({Token token = lex.get_next_token();}, TokenizationError<char>);
+}
+
+TEST(LexerTest, Floating_literal_test7){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << "123456789.";
+  Lexer lex(s);
+  ASSERT_THROW(Token token = lex.get_next_token(), TokenizationError<char>);
 }
 
 TEST(LexerTest, Identifier_test1){
@@ -556,6 +580,14 @@ TEST(LexerTest, String_literal_test_backslachandnothing){
   std::stringstream s;
   s.unsetf(std::ios::skipws);
   s << "\"\\";
+  Lexer lex(s);
+  ASSERT_THROW({Token token = lex.get_next_token();}, TokenizationError<char>);
+}
+
+TEST(LexerTest, String_literal_test_bad_escaped){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << "\\l";
   Lexer lex(s);
   ASSERT_THROW({Token token = lex.get_next_token();}, TokenizationError<char>);
 }
@@ -805,19 +837,21 @@ TEST(ParserTest, Function_test1){
   s << "fun testowa(param1:const int, bruh : float) : int {}";
   Lexer lex(s);
   Parser parser(lex);
-  auto program = parser.parse();
-  ASSERT_EQ(program->get_function_definitions()->at(0)->get_name(), "testowa");
-  ASSERT_EQ(program->get_function_definitions()->at(0)->get_type()->get_is_const(), false);
-  ASSERT_EQ(program->get_function_definitions()->at(0)->get_type()->get_type(), Type::Integer);
-  auto& param1 = program->get_function_definitions()->at(0)->get_parameters()->at(0);
+  auto fun_vect = parser.parse();
+  auto program = Program<char>(std::move(fun_vect));
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_name(), "testowa");
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_type()->get_is_const(), false);
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_type()->get_type(), Type::Integer);
+  auto& param1 = program.get_function_definitions()->at("testowa")->get_parameters()->at(0);
   ASSERT_EQ(param1->get_name(), "param1");
   ASSERT_EQ(param1->get_type()->get_is_const(), true);
   ASSERT_EQ(param1->get_type()->get_type(), Type::Integer);
-  auto &param2 = program->get_function_definitions()->at(0)->get_parameters()->at(1);
+  auto &param2 = program.get_function_definitions()->at("testowa")->get_parameters()->at(1);
   ASSERT_EQ(param2->get_name(), "bruh");
   ASSERT_EQ(param2->get_type()->get_is_const(), false);
   ASSERT_EQ(param2->get_type()->get_type(), Type::Floating);
-  ASSERT_EQ(program->get_function_definitions()->at(0)->get_block()->size(), 0);
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_block()->size(), 0);
+  ASSERT_NO_THROW(program.print_self(std::cout));
 }
 
 TEST(ParserTest, check_and_advance){
@@ -961,6 +995,14 @@ TEST(ParserTest, try_parse_expression5){
   ASSERT_EQ(right_call->get_arguments()->size(), 1);
 }
 
+TEST(ParserTest, try_parse_expression6){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << "a + b or 3 < ident and 9 * 222";
+  Lexer lex(s);
+  ParserBase parser(lex);
+  parser.try_parse_expression();
+}
 
 TEST(ParserTest, try_parse_expression_fail1){
   std::stringstream s;
@@ -1264,6 +1306,19 @@ TEST(ParserTest, try_parse_parameter_list_definition){
   ASSERT_EQ(expr->at(1)->get_type()->get_type(), Type::File);
 }
 
+
+
+TEST(ParserTest, try_parse_parameter_list_definition2){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << "";
+  Lexer lex(s);
+  ParserBase parser(lex);
+  auto expr = parser.try_parse_parameter_list_definition().release();
+  ASSERT_NE(expr, nullptr);
+  ASSERT_EQ(expr->size(), 0);
+}
+
 TEST(ParserTest, try_parse_match_expression){
   std::stringstream s;
   s.unsetf(std::ios::skipws);
@@ -1369,4 +1424,98 @@ TEST(ParserTest, try_parse_match_operation){
   ASSERT_EQ(expr->get_block()->at(1)->get_expression()->get_expression_type(), ExpressionType::IdentifierExpression);
   ASSERT_EQ(expr->get_arguments()->size(), 3);
 
+}
+
+TEST(ParserTest, big_test){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << 
+  R"(fun fibonacci(n: const int): int {
+        return match(n){
+            0:  0,
+            1:  1,
+            _:  fibonacci(n - 1) + fibonacci(n - 2)
+        };
+    }
+
+    fun fizzbuzz(n: const int): void {
+        temp: int = 1;
+        while(temp <= n){
+            match(temp % 3, temp % 5){
+                0, 0:   print("fizzbuzz"),
+                0, _:   print("fizz"),
+                _, 0:   print("buzz"),
+                _, _:   print(temp)
+            }
+            temp = temp + 1;
+        }
+    }
+
+    fun progressive_tax(salary: const float): float {   # not accurate
+        tax_rate: float = match(salary){
+            < 1000.0:   0.1,
+            < 2500.0:   0.3,
+            _:          0.5
+        };
+        return salary * tax_rate;
+    }
+
+    fun is_even(n: const int): int {
+        return match(n % 2){
+            0:  1,
+            1:  0
+        };
+    }
+
+    fun is_even2(n: const int): int {
+        return match(n){
+            is_even:    1,
+            _:          0
+        };
+    }
+
+
+    fun print_file(filename: const str): void {
+        handle: file = open_file(filename);
+        if(bad_file(handle)){
+            return;
+        }
+        else{
+            line: str = read_line(handle);
+            while(line != EOF_MARKER){
+                print(line);
+                line = read_line(handle);
+            }
+            close_file(handle);
+        }
+    }
+
+    fun main(): void{
+        if(arguments_number() < 1){
+            exit(1);
+        }
+        print_file(argument(1));
+
+        number: int = 6;
+        print(to_str(number) | ". Fibonacci number is " | to_str(fibonacci(number)));
+
+        print("2 + 3 * 2 = " | to_str(2+3*2) | " == 8?");
+
+        if(number < 12 and is_even(number) or not is_even(number)){
+            print("Logical precedence works ?");
+        }
+
+        print("Tax for 1500zl = " | tax_rate(1500.0));
+    }
+
+    )";
+
+  std::stringstream null_stream{};
+  null_stream.setstate(std::ios_base::badbit);
+  Lexer lex(s);
+  CommentFilterLexer<char> filered_lex{lex};
+  Parser parser(filered_lex);
+  auto fun_vect = parser.parse();
+  auto program = Program<char>(std::move(fun_vect));
+  program.print_self(null_stream);
 }

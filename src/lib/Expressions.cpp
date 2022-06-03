@@ -40,7 +40,8 @@ std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expression_
     {ExpressionType::FunctionCallExpression,        "FunctionCallExpression"},
     {ExpressionType::MatchExpression,               "MatchExpression"},
     {ExpressionType::UnderscoreExpression,          "UnderscoreExpression"},
-    {ExpressionType::IdentifierExpression,          "IdentifierExpression"}
+    {ExpressionType::IdentifierExpression,          "IdentifierExpression"},
+    {ExpressionType::BooleanLiteralExpression,      "BooleanLiteralExpression"}
 };
 
 template class SingleArgExpression<char>;
