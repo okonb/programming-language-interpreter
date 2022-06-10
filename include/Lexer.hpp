@@ -30,6 +30,7 @@ public:
     explicit Lexer(std::basic_istream<T> &in_stream) : current_position({1, 0}), start_position({1, 1}), input_stream(in_stream), newline_sequence(std::nullopt) { advance_character(); input_stream.unsetf(std::ios::skipws); };
     ~Lexer() { input_stream.setf(std::ios::skipws); }
     Token<T> get_next_token() override;
+    static const std::basic_string<T> &get_token_text(TokenType t) {return token_to_text.at(t);}
 private:
     T current_symbol;
     Position current_position, start_position;
@@ -40,6 +41,7 @@ private:
     static const std::map<std::basic_string<T>, TokenType> two_char_operator_lookup;
     static const std::map<T, T> two_char_operators;
     static const std::map<T, T> escapes;
+    static const std::map<TokenType, std::basic_string<T>> token_to_text;
     std::optional<Token<T>> try_build_etx();
     std::optional<Token<T>> try_build_operator();
     std::optional<Token<T>> try_build_number();

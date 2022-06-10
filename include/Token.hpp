@@ -2,6 +2,7 @@
 #define TOKEN_HPP
 
 #include "CharType.hpp"
+#include "Position.hpp"
 #include <variant>
 #include <cstdint>
 #include <string>
@@ -56,9 +57,6 @@ enum class TokenType{
     Match_keywd,
 };
 
-struct Position{
-    uint64_t line, column;
-};
 
 class TokenTypeValueMismatch : public std::runtime_error {
 public:
@@ -66,7 +64,7 @@ public:
 };
 
 template<CharType T>
-using token_value_t = std::variant<std::monostate, int64_t, double, std::basic_string<T>, bool>;
+using token_value_t = std::variant<std::monostate, std::basic_string<T>, int64_t, double, bool>;
 
 template<CharType T = char>
 class Token{
@@ -84,7 +82,7 @@ public:
             throw TokenTypeValueMismatch();
         }
     }
-    const TokenType &get_type() const { return type; }
+    TokenType get_type() const { return type; }
     const Position &get_position() const { return position; }
     const token_value_t<T> &get_value() const { return value; }
 private:

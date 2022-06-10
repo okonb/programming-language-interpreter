@@ -42,18 +42,19 @@ enum class ExpressionType{
     IntegerLiteralExpression,
     FloatingLiteralExpression,
     StringLiteralExpression,
+    BooleanLiteralExpression,
     FunctionCallExpression,
     IdentifierExpression,
     MatchExpression,
     UnderscoreExpression,
-    BooleanLiteralExpression
 };
 
 template<CharType T>
 class IExpression : public IInstruction<T> {
 public:
-    IExpression(ExpressionType t) : type{t} {}
+    IExpression(ExpressionType t, const Position &pos) : IInstruction<T>{pos}, type{t} {}
     const std::basic_string<T> &get_string_repr() const {return expression_string_map.at(type);}
+    static const std::basic_string<T> &get_string_repr(ExpressionType t) {return expression_string_map.at(t);}
     ExpressionType get_expression_type() const {return type;}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);

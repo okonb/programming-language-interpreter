@@ -41,9 +41,12 @@ public:
             function_definitions->insert(std::make_pair(name, std::move(function)));
         }
     }
-    const std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> &get_function_definitions() const {
+    const std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> &get_function_definitions() {
         return function_definitions;
     };
+    std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> give_function_definitions(){
+        return std::move(function_definitions);
+    }
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
         stream << "Program\n";

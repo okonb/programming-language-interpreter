@@ -10,16 +10,7 @@ template<CharType T>
 class TwoArgExpression;
 
 template<CharType T>
-class IntegerLiteralExpression;
-
-template<CharType T>
-class FloatingLiteralExpression;
-
-template<CharType T>
-class StringLiteralExpression;
-
-template<CharType T>
-class BooleanLiteralExpression;
+class LiteralExpression;
 
 template<CharType T>
 class IdentifierExpression;

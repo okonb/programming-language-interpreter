@@ -37,11 +37,11 @@ std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expression_
     {ExpressionType::IntegerLiteralExpression,      "IntegerLiteralExpression"},
     {ExpressionType::FloatingLiteralExpression,     "FloatingLiteralExpression"},
     {ExpressionType::StringLiteralExpression,       "StringLiteralExpression"},
+    {ExpressionType::BooleanLiteralExpression,      "BooleanLiteralExpression"},
     {ExpressionType::FunctionCallExpression,        "FunctionCallExpression"},
     {ExpressionType::MatchExpression,               "MatchExpression"},
     {ExpressionType::UnderscoreExpression,          "UnderscoreExpression"},
     {ExpressionType::IdentifierExpression,          "IdentifierExpression"},
-    {ExpressionType::BooleanLiteralExpression,      "BooleanLiteralExpression"}
 };
 
 template class SingleArgExpression<char>;

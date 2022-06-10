@@ -23,8 +23,8 @@ class IVisitor;
 template<CharType T>
 class ReturnInstruction : public IInstruction<T>{
 public:
-    ReturnInstruction(std::unique_ptr<IExpression<T>> e) :
-        expression(std::move(e)) {}
+    ReturnInstruction(std::unique_ptr<IExpression<T>> e, const Position &pos) :
+        IInstruction<T>{pos}, expression(std::move(e)) {}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
         stream << "ReturnInstruction:\n";
@@ -45,8 +45,8 @@ private:
 template<CharType T>
 class AssignmentInstruction : public IInstruction<T>{
 public:
-    AssignmentInstruction(const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e) :
-        name{n}, expression(std::move(e)) {}
+    AssignmentInstruction(const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
+        IInstruction<T>{pos}, name{n}, expression(std::move(e)) {}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
         stream << "AssignmentInstruction: " << name << " = \n";
@@ -63,8 +63,8 @@ private:
 template<CharType T>
 class VarDefinitionInstruction : public IInstruction<T>{
 public:
-    VarDefinitionInstruction(std::unique_ptr<TypeIdentifier<T>> &t, const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e) :
-        type{std::move(t)}, name{n}, expression(std::move(e)) {}
+    VarDefinitionInstruction(std::unique_ptr<TypeIdentifier<T>> &t, const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
+        IInstruction<T>{pos}, type{std::move(t)}, name{n}, expression(std::move(e)) {}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
         stream << "VarDefinitionInstruction: " << name << " : " << type->get_str_representation() << " = \n";
@@ -84,8 +84,8 @@ private:
 template<CharType T>
 class IfInstruction : public IInstruction<T>{
 public:
-    IfInstruction(std::unique_ptr<IExpression<T>> cond, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> block, std::unique_ptr<IInstruction<T>> else_b) :
-        condition(std::move(cond)), code_block(std::move(block)), else_block{std::move(else_b)} {}
+    IfInstruction(std::unique_ptr<IExpression<T>> cond, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> block, std::unique_ptr<IInstruction<T>> else_b, const Position &pos) :
+        IInstruction<T>{pos}, condition(std::move(cond)), code_block(std::move(block)), else_block{std::move(else_b)} {}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         if(condition){
             this->print_n_spaces(stream, level);
@@ -118,8 +118,8 @@ private:
 template<CharType T>
 class WhileInstruction : public IInstruction<T>{
 public:
-    WhileInstruction(std::unique_ptr<IExpression<T>> cond, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> block) :
-        condition(std::move(cond)), code_block(std::move(block)) {}
+    WhileInstruction(std::unique_ptr<IExpression<T>> cond, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> block, const Position &pos) :
+        IInstruction<T>{pos}, condition(std::move(cond)), code_block(std::move(block)) {}
     void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
         this->print_n_spaces(stream, level);
         stream << "WhileInstruction\n";

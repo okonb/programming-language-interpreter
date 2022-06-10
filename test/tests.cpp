@@ -892,14 +892,14 @@ TEST(ParserTest, try_parse_literal){
   s << "\"dziala\" 123 122.21";
   Lexer lex(s);
   ParserBase parser(lex);
-  auto str_literal = dynamic_cast<StringLiteralExpression<char>*>(parser.try_parse_literal().release());
-  ASSERT_EQ(str_literal->get_value(), "dziala");
+  auto str_literal = std::get<std::basic_string<char>>(dynamic_cast<LiteralExpression<char>*>(parser.try_parse_literal().release())->get_value());
+  ASSERT_EQ(str_literal, "dziala");
   
-  auto int_literal = dynamic_cast<IntegerLiteralExpression<char>*>(parser.try_parse_literal().release());
-  ASSERT_EQ(int_literal->get_value(), 123);
+  auto int_literal = std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(parser.try_parse_literal().release())->get_value());
+  ASSERT_EQ(int_literal, 123);
   
-  auto float_literal = dynamic_cast<FloatingLiteralExpression<char>*>(parser.try_parse_literal().release());
-  ASSERT_DOUBLE_EQ(float_literal->get_value(), 122.21);
+  auto float_literal = std::get<double>(dynamic_cast<LiteralExpression<char>*>(parser.try_parse_literal().release())->get_value());
+  ASSERT_DOUBLE_EQ(float_literal, 122.21);
   ASSERT_EQ(parser.is_current_token_a_type(), false);
 }
 
@@ -927,7 +927,7 @@ TEST(ParserTest, try_parse_expression2){
   auto &right = expr->get_right_expression();
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_string_repr(), "ModuloExpression");
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(left.get())->get_value(), 3);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(left.get())->get_value()), 3);
   ASSERT_EQ(dynamic_cast<IdentifierExpression<char>*>(right.get())->get_value(), "c");
 }
 
@@ -942,15 +942,15 @@ TEST(ParserTest, try_parse_expression3){
   auto &left = expr->get_left_expression();
   auto &right = expr->get_right_expression();
   ASSERT_EQ(expr->get_string_repr(), "PlusExpression");
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(left.get())->get_value(), 2);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(left.get())->get_value()), 2);
   auto right_mult = dynamic_cast<TwoArgExpression<char>*>(right.get());
   ASSERT_EQ(right_mult->get_string_repr(), "MultiplicationExpression");
   
   auto &left2 = right_mult->get_left_expression();
   auto &right2 = right_mult->get_right_expression();
   
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(left2.get())->get_value(), 3);
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(right2.get())->get_value(), 8);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(left2.get())->get_value()), 3);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(right2.get())->get_value()), 8);
 }
 
 TEST(ParserTest, try_parse_expression4){
@@ -964,15 +964,15 @@ TEST(ParserTest, try_parse_expression4){
   auto &left = expr->get_left_expression();
   auto &right = expr->get_right_expression();
   ASSERT_EQ(expr->get_string_repr(), "MultiplicationExpression");
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(right.get())->get_value(), 8);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(right.get())->get_value()), 8);
   auto left_add = dynamic_cast<TwoArgExpression<char>*>(left.get());
   ASSERT_EQ(left_add->get_string_repr(), "PlusExpression");
   
   auto &left2 = left_add->get_left_expression();
   auto &right2 = left_add->get_right_expression();
   
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(left2.get())->get_value(), 2);
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(right2.get())->get_value(), 3);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(left2.get())->get_value()), 2);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(right2.get())->get_value()), 3);
 }
 
 
@@ -987,7 +987,7 @@ TEST(ParserTest, try_parse_expression5){
   auto &left = expr->get_left_expression();
   auto &right = expr->get_right_expression();
   ASSERT_EQ(expr->get_string_repr(), "MultiplicationExpression");
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(left.get())->get_value(), 2);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(left.get())->get_value()), 2);
   auto right_call = dynamic_cast<FunctionCall<char>*>(right.get());
   ASSERT_EQ(right_call->get_string_repr(), "FunctionCallExpression");
   
@@ -1045,9 +1045,9 @@ TEST(ParserTest, try_parse_return_statement){
   ASSERT_NE(expr, nullptr);
   const auto &inner = dynamic_cast<TwoArgExpression<char>*>(expr->get_expression().get());
   const auto &left = dynamic_cast<IdentifierExpression<char>*>(inner->get_left_expression().get());
-  const auto &right = dynamic_cast<IntegerLiteralExpression<char>*>(inner->get_right_expression().get());
+  const auto &right = dynamic_cast<LiteralExpression<char>*>(inner->get_right_expression().get());
   ASSERT_EQ(left->get_value(), "ekspresja");
-  ASSERT_EQ(right->get_value(), 12);
+  ASSERT_EQ(std::get<int64_t>(right->get_value()), 12);
 }
 
 
@@ -1076,7 +1076,7 @@ TEST(ParserTest, try_parse_var_def_assign_or_funcall2){
   ASSERT_NO_THROW( expr = dynamic_cast<AssignmentInstruction<char>*>(parser.try_parse_var_def_assign_or_funcall().release()));
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_name(), "var");
-  ASSERT_NO_THROW(dynamic_cast<IntegerLiteralExpression<char>*>(expr->get_expression().get()));
+  ASSERT_NO_THROW(dynamic_cast<LiteralExpression<char>*>(expr->get_expression().get()));
 }
 
 
@@ -1240,7 +1240,7 @@ TEST(ParserTest, try_parse_statement_or_control_block2){
   ASSERT_NO_THROW( expr = dynamic_cast<AssignmentInstruction<char>*>(parser.try_parse_statement_or_control_block().release()));
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_name(), "a");
-  ASSERT_EQ(dynamic_cast<IntegerLiteralExpression<char>*>(expr->get_expression().get())->get_value(), 123);
+  ASSERT_EQ(std::get<int64_t>(dynamic_cast<LiteralExpression<char>*>(expr->get_expression().get())->get_value()), 123);
 }
 
 TEST(ParserTest, try_parse_code_block){
