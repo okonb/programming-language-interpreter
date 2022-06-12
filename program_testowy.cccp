@@ -117,5 +117,9 @@ fun main(): int{
 
     while_return_test(); 
 
+    if(not is_even2(3)){
+        print("ok\n");
+    }
+
     return 0;
 }

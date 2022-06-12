@@ -4,6 +4,7 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "CommentFilterLexer.hpp"
+#include "Interpreter.hpp"
 
 // Lexer tests
 
@@ -1430,83 +1431,133 @@ TEST(ParserTest, big_test){
   std::stringstream s;
   s.unsetf(std::ios::skipws);
   s << 
-  R"(fun fibonacci(n: const int): int {
-        return match(n){
-            0:  0,
-            1:  1,
-            _:  fibonacci(n - 1) + fibonacci(n - 2)
-        };
-    }
+  R"(
+fun fibonacci(n: const int): int {
+    return match(n){
+        0:  0,
+        1:  1,
+        _:  fibonacci(n - 1) + fibonacci(n - 2)
+    };
+}
 
-    fun fizzbuzz(n: const int): void {
-        temp: int = 1;
-        while(temp <= n){
-            match(temp % 3, temp % 5){
-                0, 0:   print("fizzbuzz"),
-                0, _:   print("fizz"),
-                _, 0:   print("buzz"),
-                _, _:   print(temp)
-            }
-            temp = temp + 1;
+fun fizzbuzz(n: const int): void {
+    temp: int = 1;
+    while(temp <= n){
+        match(temp % 3, temp % 5){
+            0, 0:   print("fizzbuzz"),
+            0, _:   print("fizz"),
+            _, 0:   print("buzz"),
+            _, _:   print(to_string_int(temp))
         }
+        temp = temp + 1;
     }
+}
 
-    fun progressive_tax(salary: const float): float {   # not accurate
-        tax_rate: float = match(salary){
-            < 1000.0:   0.1,
-            < 2500.0:   0.3,
-            _:          0.5
-        };
-        return salary * tax_rate;
-    }
+fun progressive_tax(salary: const float): float {   # not accurate
+    tax_rate: float = match(salary){
+        < 1000.0:   0.1,
+        < 2500.0:   0.3,
+        _:          0.5
+    };
+    return salary * tax_rate;
+}
 
-    fun is_even(n: const int): int {
-        return match(n % 2){
-            0:  1,
-            1:  0
-        };
-    }
+fun is_even(n: const int): bool {
+    return match(n % 2){
+        0:  true,
+        1:  false
+    };
+}
 
-    fun is_even2(n: const int): int {
-        return match(n){
-            is_even:    1,
-            _:          0
-        };
-    }
+fun is_even2(n: const int): bool {
+    return match(n){
+        is_even:    true,
+        _:          false
+    };
+}
 
-
-    fun print_file(filename: const str): void {
-        handle: file = open_file(filename);
-        if(bad_file(handle)){
+fun while_return_test(): void{
+    number: int = 4;
+    while(number > 0){
+        if(number == 1){
             return;
         }
-        else{
-            line: str = read_line(handle);
-            while(line != EOF_MARKER){
-                print(line);
-                line = read_line(handle);
-            }
-            close_file(handle);
+        print(to_str_int(number) | "\n");
+        number = number - 1;
+    }
+}
+
+fun print_file(filename: const str): void {
+    handle: file = open_file(filename);
+    if(bad_file(handle)){
+        return;
+    }
+    else{
+        line: str = read_line(handle);
+        while(line != EOF_MARKER){
+            print(line | "\n");
+            line = read_line(handle);
         }
+        close_file(handle);
+    }
+}
+
+fun add_one(number: int): void {
+    number = number + 1;
+}
+
+fun multiple_matches(): int{
+    return match(1, 2, 3){
+        is_even2 and is_even, is_even2, is_even2: 0,
+        _, is_even2, _              : 1,
+        _, _, _                     : 2
+    };
+}
+
+fun main(): int{
+    if(arguments_number() >= 1){
+        print("Opening and printing file " | argument(0) | "\n");
+        print_file(argument(0));
+        print("Done!\n");
+    } else {
+        print("No filename provided as argument, skipping...\n");
     }
 
-    fun main(): void{
-        if(arguments_number() < 1){
-            exit(1);
-        }
-        print_file(argument(1));
+    
 
-        number: int = 6;
-        print(to_str(number) | ". Fibonacci number is " | to_str(fibonacci(number)));
+    # bad_variable: int = 14.33;
+    # print(to_str_int(bad_variable));
 
-        print("2 + 3 * 2 = " | to_str(2+3*2) | " == 8?");
+    number: int = 6;
+    print("Fibonacci[" | to_str_int(number) | "] number is " | to_str_int(fibonacci(number)) | ".\n");
 
-        if(number < 12 and is_even(number) or not is_even(number)){
-            print("Logical precedence works ?");
-        }
+    print("Checking if passing by reference works - printed below should be five (4 after incrementing)\n");
+    do_dodania: int = 4;
+    add_one(do_dodania);
+    print(to_str_int(do_dodania) | "\n");
+    #add_one(do_dodania + 1);                   #generuje error - dodanie do stalej (r-wartosci)
+    #print(to_str_int(do_dodania) | "\n");
 
-        print("Tax for 1500zl = " | tax_rate(1500.0));
+
+    print("2 + 3 * 2 = " | to_str_int(2+3*2) | " == 8?\n");
+
+    if(number < 12 and is_even(number) or not is_even(number)){
+        print("Logical precedence works!\n");
     }
+
+    print("Tax for 1500zl = " | to_str_float(progressive_tax(1500.0)) | "\n");
+
+    print("If multiple pattern elements and many levels of match calls work,\nthis should be a 1: " | to_str_int(multiple_matches()) | "\n");
+
+    while_return_test(); 
+
+    if(not is_even2(3)){
+        print("ok\n");
+    }
+
+    return 0;
+  }
+
 
     )";
 
@@ -1518,4 +1569,166 @@ TEST(ParserTest, big_test){
   auto fun_vect = parser.parse();
   auto program = Program<char>(std::move(fun_vect));
   program.print_self(null_stream);
+}
+
+TEST(InterpreterTest, big_test){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << 
+  R"(
+fun fibonacci(n: const int): int {
+    return match(n){
+        0:  0,
+        1:  1,
+        _:  fibonacci(n - 1) + fibonacci(n - 2)
+    };
+}
+
+fun fizzbuzz(n: const int): void {
+    temp: int = 1;
+    while(temp <= n){
+        match(temp % 3, temp % 5){
+            0, 0:   print("fizzbuzz"),
+            0, _:   print("fizz"),
+            _, 0:   print("buzz"),
+            _, _:   print(to_string_int(temp))
+        }
+        temp = temp + 1;
+    }
+}
+
+fun progressive_tax(salary: const float): float {   # not accurate
+    tax_rate: float = match(salary){
+        < 1000.0:   0.1,
+        < 2500.0:   0.3,
+        _:          0.5
+    };
+    return salary * tax_rate;
+}
+
+fun is_even(n: const int): bool {
+    return match(n % 2){
+        0:  true,
+        1:  false
+    };
+}
+
+fun is_even2(n: const int): bool {
+    return match(n){
+        is_even:    true,
+        _:          false
+    };
+}
+
+fun while_return_test(): void{
+    number: int = 4;
+    while(number > 0){
+        if(number == 1){
+            return;
+        }
+        print(to_str_int(number) | "\n");
+        number = number - 1;
+    }
+}
+
+fun print_file(filename: const str): void {
+    handle: file = open_file(filename);
+    if(bad_file(handle)){
+        return;
+    }
+    else{
+        line: str = read_line(handle);
+        while(line != EOF_MARKER){
+            print(line | "\n");
+            line = read_line(handle);
+        }
+        close_file(handle);
+    }
+}
+
+fun add_one(number: int): void {
+    number = number + 1;
+}
+
+fun multiple_matches(): int{
+    return match(1, 2, 3){
+        is_even2 and is_even, is_even2, is_even2: 0,
+        _, is_even2, _              : 1,
+        _, _, _                     : 2
+    };
+}
+
+fun main(): int{
+    if(arguments_number() >= 1){
+        print("Opening and printing file " | argument(0) | "\n");
+        print_file(argument(0));
+        print("Done!\n");
+    } else {
+        print("No filename provided as argument, skipping...\n");
+    }
+
+    
+
+    # bad_variable: int = 14.33;
+    # print(to_str_int(bad_variable));
+
+    number: int = 6;
+    print("Fibonacci[" | to_str_int(number) | "] number is " | to_str_int(fibonacci(number)) | ".\n");
+
+    print("Checking if passing by reference works - printed below should be five (4 after incrementing)\n");
+    do_dodania: int = 4;
+    add_one(do_dodania);
+    print(to_str_int(do_dodania) | "\n");
+    #add_one(do_dodania + 1);                   #generuje error - dodanie do stalej (r-wartosci)
+    #print(to_str_int(do_dodania) | "\n");
+
+
+    print("2 + 3 * 2 = " | to_str_int(2+3*2) | " == 8?\n");
+
+    if(number < 12 and is_even(number) or not is_even(number)){
+        print("Logical precedence works!\n");
+    }
+
+    print("Tax for 1500zl = " | to_str_float(progressive_tax(1500.0)) | "\n");
+
+    print("If multiple pattern elements and many levels of match calls work,\nthis should be a 1: " | to_str_int(multiple_matches()) | "\n");
+
+    while_return_test(); 
+
+    if(not is_even2(3)){
+        print("ok\n");
+    }
+
+    if(3 == 4){
+      print("");
+    }
+    if(3 != 4){
+      print("");
+    }
+    
+    if(-3 / 12 <= -20 or 3 == 3){
+      print("");
+    }
+
+    if("" != EOF_MARKER){
+      if(to_str_bool(true) == "true"){
+        if(3 == to_int_float(to_float_int(3))){
+          print("ok\n");
+        }
+      }
+    }
+
+    return 0;
+  }
+    )";
+
+  std::stringstream null_stream{};
+  null_stream.setstate(std::ios_base::badbit);
+  Lexer lex(s);
+  CommentFilterLexer<char> filered_lex{lex};
+  Parser parser(filered_lex);
+  auto program = std::make_unique<Program<char>>(std::move(parser.parse()));
+  Interpreter<char> inter{std::move(program), null_stream, {"./Makefile"}};
+  ASSERT_NO_THROW(inter.run());
+
 }

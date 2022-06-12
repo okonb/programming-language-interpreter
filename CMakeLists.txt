@@ -73,7 +73,7 @@ gtest_discover_tests(tests)
 
 add_custom_target(callgrind DEPENDS main_callgrind
   COMMAND   rm callgrind.out.*
-  COMMAND   valgrind --tool=callgrind ./main_callgrind > /dev/null
+  COMMAND   valgrind --tool=callgrind ./main_callgrind ../program_testowy.cccp > /dev/null
 )
 
 set_target_properties(callgrind PROPERTIES EXCLUDE_FROM_ALL 1)
