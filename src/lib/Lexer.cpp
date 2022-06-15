@@ -2,6 +2,58 @@
 
 
 template<>
+const std::map<TokenType, std::basic_string<char>> Lexer<char>::token_to_text{
+    {TokenType::And            , "and"     },
+    {TokenType::Or             , "or"     },
+    {TokenType::Not            , "not"     },
+    {TokenType::True           , "true"    },
+    {TokenType::False          , "false"   },
+    {TokenType::Integer_type   , "int"     },
+    {TokenType::Floating_type  , "float"   },
+    {TokenType::String_type    , "str"     },
+    {TokenType::File_type      , "file"    },
+    {TokenType::Bool_type      , "bool"    },
+    {TokenType::Void_type      , "void"    },
+    {TokenType::Return_keywd   , "return"  },
+    {TokenType::Function_keywd , "fun"     },
+    {TokenType::If_keywd       , "if"      },
+    {TokenType::Else_keywd     , "else"    },
+    {TokenType::While_keywd    , "while"   },
+    {TokenType::Const_keywd    , "const"   },
+    {TokenType::Match_keywd    , "match"   },
+    {TokenType::Opening_parenth, "("       },
+    {TokenType::Closing_parenth, ")"       },
+    {TokenType::Opening_curly  , "{"       },
+    {TokenType::Closing_curly  , "}"       },
+    {TokenType::Colon          , ":"       },
+    {TokenType::Semicolon      , ";"       },
+    {TokenType::Comma          , ","       },
+    {TokenType::Underscore     , "_"       },
+    {TokenType::Assign         , "="       },
+    {TokenType::Plus           , "+"       },
+    {TokenType::Minus          , "-"       },
+    {TokenType::Multiplication , "*"       },
+    {TokenType::Division       , "/"       },
+    {TokenType::Modulo         , "%"       },
+    {TokenType::String_concat  , "|"       },
+    {TokenType::Gt             , ">"       },
+    {TokenType::Lt             , "<"       },
+    {TokenType::Gte            , ">="      },
+    {TokenType::Lte            , "<="      },
+    {TokenType::Equals         , "=="      },
+    {TokenType::Not_equals     , "!="      },
+    {TokenType::ETX_token,  "ETX_TOKEN"},
+    {TokenType::Integer_literal, "Integer_literal"},
+    {TokenType::Floating_literal, "Floating_literal"},
+    {TokenType::String_literal, "String_literal"},
+    {TokenType::Boolean_literal, "Boolean_literal"},
+    {TokenType::Identifier, "Identifier"},
+    {TokenType::Comment, "Comment"},
+    
+};
+
+
+template<>
 const std::map<std::basic_string<char>, TokenType> Lexer<char>::keyword_lookup{
     {"and",     TokenType::And},
     {"or",      TokenType::Or},
@@ -21,6 +73,7 @@ const std::map<std::basic_string<char>, TokenType> Lexer<char>::keyword_lookup{
     {"while",   TokenType::While_keywd},
     {"const",   TokenType::Const_keywd},
     {"match",   TokenType::Match_keywd},
+    
 };
 
 template<>
@@ -219,6 +272,9 @@ std::optional<Token<T>> Lexer<T>::try_build_identifier_or_keyword(){
         s << current_symbol;
     }
     if(auto iter = keyword_lookup.find(s.str()); iter != keyword_lookup.end()){
+        if(iter->second == TokenType::True || iter->second == TokenType::False){
+            return Token<T>(TokenType::Boolean_literal, start_position, iter->second == TokenType::True);
+        }
         return Token<T>(iter->second, start_position, {});
     }
     return Token<T>(TokenType::Identifier, start_position, s.str());

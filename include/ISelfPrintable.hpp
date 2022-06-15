@@ -7,7 +7,7 @@
 template<CharType T>
 class ISelfPrintable{
 public:
-    void print_n_spaces(std::ostream &stream, size_t level) const{
+    void print_n_spaces(std::ostream &stream, size_t level) const {
         for(size_t i = 0; i < level; ++i)
             stream << " |";
     }

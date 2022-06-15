@@ -3,7 +3,8 @@ project(TKOM_Projekt)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+set(CMAKE_CXX_FLAGS "")
+set(GENERAL_FLAGS   -Wall -Wextra -pedantic -Werror)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -22,10 +23,28 @@ add_library(tkom_proj_lib STATIC ${proj_LIB})
 
 target_include_directories(tkom_proj_lib PUBLIC include)
 
+
+add_library(tkom_proj_lib_gcov STATIC EXCLUDE_FROM_ALL ${proj_LIB})
+
+target_include_directories(tkom_proj_lib_gcov PUBLIC include)
+
+target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
+
+
 add_executable(main src/main.cpp)
 
+target_compile_options(main PUBLIC ${GENERAL_FLAGS} -O3)
 
 target_link_libraries(main PUBLIC tkom_proj_lib)
+
+
+
+add_executable(main_callgrind EXCLUDE_FROM_ALL src/main.cpp)
+
+target_compile_options(main_callgrind PUBLIC ${GENERAL_FLAGS} -O3)
+
+target_link_libraries(main_callgrind PUBLIC tkom_proj_lib)
+
 
 # testing
 
@@ -39,11 +58,22 @@ add_executable(
 
 target_include_directories(tests PUBLIC include)
 
+target_compile_options(tests PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
+
 target_link_libraries(
   tests
-  tkom_proj_lib
+  tkom_proj_lib_gcov
   gtest_main
 )
 
+target_link_options(tests PUBLIC --coverage)
+
 include(GoogleTest)
 gtest_discover_tests(tests)
+
+add_custom_target(callgrind DEPENDS main_callgrind
+  COMMAND   rm callgrind.out.*
+  COMMAND   valgrind --tool=callgrind ./main_callgrind > /dev/null
+)
+
+set_target_properties(callgrind PROPERTIES EXCLUDE_FROM_ALL 1)
