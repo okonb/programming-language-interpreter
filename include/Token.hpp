@@ -2,6 +2,7 @@
 #define TOKEN_HPP
 
 #include "CharType.hpp"
+#include "Position.hpp"
 #include <variant>
 #include <cstdint>
 #include <string>
@@ -12,6 +13,7 @@ enum class TokenType{
     Integer_literal,
     Floating_literal,
     String_literal,
+    Boolean_literal,
     Identifier,
     Comment,
     Opening_parenth,
@@ -55,9 +57,6 @@ enum class TokenType{
     Match_keywd,
 };
 
-struct Position{
-    uint64_t line, column;
-};
 
 class TokenTypeValueMismatch : public std::runtime_error {
 public:
@@ -65,24 +64,25 @@ public:
 };
 
 template<CharType T>
-using token_value_t = std::variant<std::monostate, int64_t, double, std::basic_string<T>>;
+using token_value_t = std::variant<std::monostate, std::basic_string<T>, int64_t, double, bool>;
 
 template<CharType T = char>
 class Token{
 public:
     Token(TokenType t, const Position &p, token_value_t<T> v) : 
         type(t), position(p), value(std::move(v)) {
-        if( (std::holds_alternative<int64_t>(value) && type != TokenType::Integer_literal) ||
-            (std::holds_alternative<double>(value) && type != TokenType::Floating_literal) ||
+        if( (std::holds_alternative<int64_t>(value) && type != TokenType::Integer_literal)  ||
+            (std::holds_alternative<double>(value) && type != TokenType::Floating_literal)  ||
+            (std::holds_alternative<bool>(value) && type != TokenType::Boolean_literal)     ||
             (std::holds_alternative<std::basic_string<T>>(value) && !(
-                type == TokenType::String_literal ||
-                type == TokenType::Comment ||
+                type == TokenType::String_literal   ||
+                type == TokenType::Comment          ||
                 type == TokenType::Identifier)))
         {
             throw TokenTypeValueMismatch();
         }
     }
-    const TokenType &get_type() const { return type; }
+    TokenType get_type() const { return type; }
     const Position &get_position() const { return position; }
     const token_value_t<T> &get_value() const { return value; }
 private:

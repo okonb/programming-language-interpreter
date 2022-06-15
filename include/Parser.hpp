@@ -20,7 +20,7 @@ template<CharType T>
 class UnexpectedTokenException : public std::runtime_error{
 public:
     UnexpectedTokenException(const std::basic_string<T> &function_name, const Token<T> &t, const std::initializer_list<TokenType> &types) :
-        std::runtime_error{"expected token in get_expected_token_list()"}, function_throwing{function_name}, token{t}, expected_tokens{types} {}
+        std::runtime_error{"UnexpectedTokenException"}, function_throwing{function_name}, token{t}, expected_tokens{types} {}
     const std::basic_string<T> &get_function_throwing_name() const {return function_throwing;}
     const Token<T> &get_received_token() const {return token;}
     const std::vector<TokenType> &get_expected_token_list() const {return expected_tokens;}
@@ -34,7 +34,7 @@ template<CharType T>
 class SyntaxErrorException : public std::runtime_error{
 public:
     SyntaxErrorException(const std::basic_string<T> &function_name, const Token<T> &t, const std::basic_string<T> &e) :
-        std::runtime_error{"expected production in get_expected_production()"}, function_throwing{function_name}, token{t}, expected{e} {}
+        std::runtime_error{"SyntaxErrorException"}, function_throwing{function_name}, token{t}, expected{e} {}
     const std::basic_string<T> &get_function_throwing_name() const {return function_throwing;}
     const Token<T> &get_received_token() const {return token;}
     const std::basic_string<T> &get_expected_production() const {return expected;}
@@ -89,7 +89,9 @@ public:
     bool is_current_token_additive_operator() const;
     bool is_current_token_multiplicative_operator() const;
     bool is_current_token_relation_operator() const;
+    bool is_current_token_a_literal() const;
     Token<T> get_next_token();
+    Position get_current_position() const;
 
     ILexer<T> &lexer;
     Token<T> current_token;
@@ -114,7 +116,7 @@ template<CharType T = char>
 class Parser : private ParserBase<T>{
 public:
     Parser(ILexer<T> &l) : ParserBase<T>{l} {}
-    std::unique_ptr<Program<T>> parse();
+    std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> parse();
 };
 
 

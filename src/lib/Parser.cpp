@@ -27,6 +27,10 @@ std::map<TokenType, ExpressionType> ParserBase<T>::expression_type_map{
     {TokenType::And,                ExpressionType::AndExpression},
     {TokenType::Or,                 ExpressionType::OrExpression},
     {TokenType::Not,                ExpressionType::NotExpression},
+    {TokenType::Integer_literal,    ExpressionType::IntegerLiteralExpression},
+    {TokenType::Floating_literal,   ExpressionType::FloatingLiteralExpression},
+    {TokenType::String_literal,     ExpressionType::StringLiteralExpression},
+    {TokenType::Boolean_literal,    ExpressionType::BooleanLiteralExpression},
 };
 
 template<CharType T>
@@ -49,17 +53,18 @@ std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_type_ma
 
 // start_symbol = {function_definition};
 template<CharType T>
-std::unique_ptr<Program<T>> Parser<T>::parse(){
+std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> Parser<T>::parse(){
     while(auto function_definiton = this->try_parse_function_definition()){
         this->function_definitions->push_back(std::move(function_definiton));
     }
-    return std::make_unique<Program<T>>(std::move(this->function_definitions));
+    return std::move(this->function_definitions);
 }
 
 // function_definition = Function_keywd, Identifier, Opening_parenth, parameter_list_definition, Closing_parenth,
 //                       Colon, (type_identifier | Void_type), code_block;
 template<CharType T>
 std::unique_ptr<FunctionDefinition<T>> ParserBase<T>::try_parse_function_definition(){
+    auto start_position = get_current_position();
     if(!check_and_advance(TokenType::Function_keywd)){
         return nullptr;
     }
@@ -82,7 +87,7 @@ std::unique_ptr<FunctionDefinition<T>> ParserBase<T>::try_parse_function_definit
     auto block = try_parse_code_block();
     expect_not_null(block, "code_block");
 
-    return std::make_unique<FunctionDefinition<T>>(function_name, std::move(function_type), std::move(parameter_list), std::move(block));
+    return std::make_unique<FunctionDefinition<T>>(function_name, std::move(function_type), std::move(parameter_list), std::move(block), start_position);
 }
 
 // parameter_list_definition = [parameter_definition, {Comma, parameter_definition}];
@@ -186,13 +191,14 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_statement(){
 // var_def_assign_or_funcall = Identifier, ([Colon, type_identifier], Assign, (expression | match_operation) | parenths_and_args);
 template<CharType T>
 std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_var_def_assign_or_funcall(){
+    auto start_position = get_current_position();
     if(!is_current_token_of_type(TokenType::Identifier)){
         return nullptr;
     }
     auto name = std::get<std::basic_string<T>>(current_token.get_value());
     get_next_token();
     if(auto arguments = try_parse_parenths_and_args()){
-        return std::make_unique<FunctionCall<T>>(name, std::move(arguments));
+        return std::make_unique<FunctionCall<T>>(name, std::move(arguments), start_position);
     }
 
     bool is_var_def = false;
@@ -215,9 +221,9 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_var_def_assign_or_func
     expect_not_null(rest, "expression");
 
     if(is_var_def){
-        return std::make_unique<VarDefinitionInstruction<T>>(type, name, std::move(rest));
+        return std::make_unique<VarDefinitionInstruction<T>>(type, name, std::move(rest), start_position);
     }
-    return std::make_unique<AssignmentInstruction<T>>(name, std::move(rest));
+    return std::make_unique<AssignmentInstruction<T>>(name, std::move(rest), start_position);
 }
 
 // parenths_and_args = Opening_parenth, argument_list, Closing_parenth;
@@ -269,6 +275,7 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_control_block(){
 //if_block = If_keywd, Opening_parenth, expression, Closing_parenth, code_block, [else_block];
 template<CharType T>
 std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_if_block(){
+    auto start_position = get_current_position();
     if(!check_and_advance(TokenType::If_keywd)){
         return nullptr;
     }
@@ -279,12 +286,13 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_if_block(){
     expect_not_null(code_block, "code_block");
 
     auto else_block = try_parse_else_block();
-    return std::make_unique<IfInstruction<T>>(std::move(condition), std::move(code_block), std::move(else_block));
+    return std::make_unique<IfInstruction<T>>(std::move(condition), std::move(code_block), std::move(else_block), start_position);
 }
 
 // else_block = Else_keywd, (if_block | code_block);
 template<CharType T>
 std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_else_block(){
+    auto start_position = get_current_position();
     if(!check_and_advance(TokenType::Else_keywd)){
         return nullptr;
     }
@@ -294,12 +302,13 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_else_block(){
     auto code_block = try_parse_code_block();
     expect_not_null(code_block, "code_block");
 
-    return std::make_unique<IfInstruction<T>>(nullptr, std::move(code_block), nullptr);
+    return std::make_unique<IfInstruction<T>>(nullptr, std::move(code_block), nullptr, start_position);
 }
 
 // while_block = While_keywd, condition, code_block;
 template<CharType T>
 std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_while_block(){
+    auto start_position = get_current_position();
     if(!check_and_advance(TokenType::While_keywd)){
         return nullptr;
     }
@@ -309,7 +318,7 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_while_block(){
     auto code_block = try_parse_code_block();
     expect_not_null(code_block, "code_block");
 
-    return std::make_unique<WhileInstruction<T>>(std::move(condition), std::move(code_block));
+    return std::make_unique<WhileInstruction<T>>(std::move(condition), std::move(code_block), start_position);
 }
 
 // condition = Opening_parenth, expression, Closing_parenth;
@@ -330,6 +339,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_condition(){
 // expression = logic_factor, {Or, logic_factor};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_expression(){
+    auto start_position = get_current_position();
     auto logic_factor_l = try_parse_logic_factor();
     if(!logic_factor_l){
         return nullptr;
@@ -338,7 +348,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_expression(){
         auto logic_factor_r = try_parse_logic_factor();
         expect_not_null(logic_factor_r, "logic_factor");
 
-        logic_factor_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::OrExpression, std::move(logic_factor_l), std::move(logic_factor_r));
+        logic_factor_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::OrExpression, std::move(logic_factor_l), std::move(logic_factor_r), start_position);
     }
     return logic_factor_l;
 }
@@ -346,6 +356,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_expression(){
 // logic_factor = relation, {And, relation};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_logic_factor(){
+    auto start_position = get_current_position();
     auto relation_l = try_parse_relation();
     if(!relation_l){
         return nullptr;
@@ -354,7 +365,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_logic_factor(){
         auto relation_r = try_parse_relation();
         expect_not_null(relation_r, "relation");
 
-        relation_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::AndExpression, std::move(relation_l), std::move(relation_r));
+        relation_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::AndExpression, std::move(relation_l), std::move(relation_r), start_position);
     }
     return relation_l;
 }
@@ -362,6 +373,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_logic_factor(){
 // relation = [Not], math_expression, [relation_operator, math_expression];
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
+    auto start_position = get_current_position();
     bool negate = check_and_advance(TokenType::Not);
     auto math_expression_l = try_parse_math_expression();
     if(!math_expression_l && negate){
@@ -376,10 +388,10 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
         auto math_expression_r = try_parse_math_expression();
         expect_not_null(math_expression_r, "math_expression");
 
-        math_expression_l = std::make_unique<TwoArgExpression<T>>(type, std::move(math_expression_l), std::move(math_expression_r));
+        math_expression_l = std::make_unique<TwoArgExpression<T>>(type, std::move(math_expression_l), std::move(math_expression_r), start_position);
     }
     if(negate){
-        math_expression_l = std::make_unique<SingleArgExpression<T>>(ExpressionType::NotExpression, std::move(math_expression_l));
+        math_expression_l = std::make_unique<SingleArgExpression<T>>(ExpressionType::NotExpression, std::move(math_expression_l), start_position);
     }
     return math_expression_l;
 }
@@ -387,6 +399,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
 // math_expression = factor, {(Plus | Minus | String_concat), factor};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_math_expression(){
+    auto start_position = get_current_position();
     auto factor_l = try_parse_factor();
     if(!factor_l){
         return nullptr;
@@ -397,7 +410,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_math_expression(){
         auto factor_r = try_parse_factor();
         expect_not_null(factor_r, "factor");
 
-        factor_l = std::make_unique<TwoArgExpression<T>>(type, std::move(factor_l), std::move(factor_r));
+        factor_l = std::make_unique<TwoArgExpression<T>>(type, std::move(factor_l), std::move(factor_r), start_position);
     }
 
     return factor_l;
@@ -406,6 +419,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_math_expression(){
 // factor = term, {(Multiplication | Division | Modulo), term};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
+    auto start_position = get_current_position();
     auto term_l = try_parse_term();
     if(!term_l){
         return nullptr;
@@ -416,7 +430,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
         auto term_r = try_parse_term();
         expect_not_null(term_r, "term");
 
-        term_l = std::make_unique<TwoArgExpression<T>>(type, std::move(term_l), std::move(term_r));
+        term_l = std::make_unique<TwoArgExpression<T>>(type, std::move(term_l), std::move(term_r), start_position);
     }
 
     return term_l;
@@ -428,6 +442,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
 
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
+    auto start_position = get_current_position();
     bool negative = check_and_advance(TokenType::Minus);
     std::unique_ptr<IExpression<T>> term = nullptr;
     
@@ -446,7 +461,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
 
     if(term){
         if(negative){
-            return std::make_unique<SingleArgExpression<T>>(ExpressionType::NegateNumberExpression, std::move(term));
+            return std::make_unique<SingleArgExpression<T>>(ExpressionType::NegateNumberExpression, std::move(term), start_position);
         }
         return term;
     }
@@ -460,6 +475,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
 // match_expression = match_logic_factor, {Or, match_logic_factor};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_expression(){
+    auto start_position = get_current_position();
     auto logic_factor_l = try_parse_match_logic_factor();
     if(!logic_factor_l){
         return nullptr;
@@ -468,7 +484,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_expression(){
         auto logic_factor_r = try_parse_match_logic_factor();
         expect_not_null(logic_factor_r, "match_logic_factor");
 
-        logic_factor_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::MatchOrExpression, std::move(logic_factor_l), std::move(logic_factor_r));
+        logic_factor_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::MatchOrExpression, std::move(logic_factor_l), std::move(logic_factor_r), start_position);
     }
     return logic_factor_l;
 }
@@ -476,6 +492,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_expression(){
 // match_logic_factor = match_relation, {And, match_relation};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_logic_factor(){
+    auto start_position = get_current_position();
     auto relation_l = try_parse_match_relation();
     if(!relation_l){
         return nullptr;
@@ -484,7 +501,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_logic_factor(){
         auto relation_r = try_parse_match_relation();
         expect_not_null(relation_r, "match_relation");
 
-        relation_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::MatchAndExpression, std::move(relation_l), std::move(relation_r));
+        relation_l = std::make_unique<TwoArgExpression<T>>(ExpressionType::MatchAndExpression, std::move(relation_l), std::move(relation_r), start_position);
     }
     return relation_l;
 }
@@ -492,6 +509,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_logic_factor(){
 // match_relation = relation_operator, match_math_expression;
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_relation(){
+    auto start_position = get_current_position();
     if(!is_current_token_relation_operator()){
         return nullptr;
     }
@@ -501,12 +519,13 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_relation(){
     auto math_expression = try_parse_match_math_expression();
     expect_not_null(math_expression, "match_math_expression");
 
-    return std::make_unique<SingleArgExpression<T>>(type, std::move(math_expression));
+    return std::make_unique<SingleArgExpression<T>>(type, std::move(math_expression), start_position);
 }
 
 // match_math_expression = match_factor, {(Plus | Minus | String_concat), match_factor};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_math_expression(){
+    auto start_position = get_current_position();
     auto factor_l = try_parse_match_factor();
     if(!factor_l){
         return nullptr;
@@ -518,7 +537,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_math_expression()
         auto factor_r = try_parse_match_factor();
         expect_not_null(factor_r, "match_factor");
 
-        factor_l = std::make_unique<TwoArgExpression<T>>(type, std::move(factor_l), std::move(factor_r));
+        factor_l = std::make_unique<TwoArgExpression<T>>(type, std::move(factor_l), std::move(factor_r), start_position);
     }
 
     return factor_l;
@@ -527,6 +546,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_math_expression()
 // match_factor  = match_term, {(Multiplication | Division | Modulo), match_term};
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
+    auto start_position = get_current_position();
     auto term_l = try_parse_match_term();
     if(!term_l){
         return nullptr;
@@ -538,7 +558,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
         auto term_r = try_parse_match_term();
         expect_not_null(term_r, "match_term");
 
-        term_l = std::make_unique<TwoArgExpression<T>>(type, std::move(term_l), std::move(term_r));
+        term_l = std::make_unique<TwoArgExpression<T>>(type, std::move(term_l), std::move(term_r), start_position);
     }
     return term_l;
 }
@@ -549,6 +569,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
 
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
+    auto start_position = get_current_position();
     bool negative = check_and_advance(TokenType::Minus);
     std::unique_ptr<IExpression<T>> term = nullptr;
     
@@ -567,7 +588,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
 
     if(term){
         if(negative){
-            return std::make_unique<SingleArgExpression<T>>(ExpressionType::MatchNegateNumberExpression, std::move(term));
+            return std::make_unique<SingleArgExpression<T>>(ExpressionType::MatchNegateNumberExpression, std::move(term), start_position);
         }
         return term;
     }
@@ -578,30 +599,24 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
     return nullptr;
 }
 
-// literal = Integer_literal | Floating_literal | String_literal;
+// literal = Integer_literal | Floating_literal | String_literal | Boolean_literal;
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_literal(){
-    if(current_token.get_type() == TokenType::Integer_literal){
-        auto value = std::get<int64_t>(current_token.get_value());
+    auto start_position = get_current_position();
+    if(is_current_token_a_literal()){
+        auto value = current_token.get_value();
+        auto type = current_token.get_type();
         get_next_token();
-        return std::make_unique<IntegerLiteralExpression<T>>(value);
+        return std::make_unique<LiteralExpression<T>>(map_expression_type(type), value, start_position);
     }
-    if(current_token.get_type() == TokenType::Floating_literal){
-        auto value = std::get<double>(current_token.get_value());
-        get_next_token();
-        return std::make_unique<FloatingLiteralExpression<T>>(value);
-    }
-    if(current_token.get_type() == TokenType::String_literal){
-        auto value = std::get<std::basic_string<T>>(current_token.get_value());
-        get_next_token();
-        return std::make_unique<StringLiteralExpression<T>>(value);
-    }
+
     return nullptr;
 }
 
 // identifier_or_funcall = Identifier, [parenths_and_args];
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_identifier_or_funcall(){
+    auto start_position = get_current_position();
     if(!is_current_token_of_type(TokenType::Identifier)){
         return nullptr;
     }
@@ -609,25 +624,26 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_identifier_or_funcall()
     get_next_token();
     auto parenths_and_args = try_parse_parenths_and_args();
     if(parenths_and_args){
-        return std::make_unique<FunctionCall<T>>(identifier, std::move(parenths_and_args));
+        return std::make_unique<FunctionCall<T>>(identifier, std::move(parenths_and_args), start_position);
     }
-    return std::make_unique<IdentifierExpression<T>>(identifier);
+    return std::make_unique<IdentifierExpression<T>>(identifier, start_position);
 }
 
 // return_statement = Return_keywd, [expression | match_operation];
 template<CharType T>
 std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_return_statement(){
+    auto start_position = get_current_position();
     if(!check_and_advance(TokenType::Return_keywd)){
         return nullptr;
     }
     if(auto expression = try_parse_expression()){
-        return std::make_unique<ReturnInstruction<T>>(std::move(expression));
+        return std::make_unique<ReturnInstruction<T>>(std::move(expression), start_position);
     }
     if(auto match_operation = try_parse_match_operation()){
-        return std::make_unique<ReturnInstruction<T>>(std::move(match_operation));
+        return std::make_unique<ReturnInstruction<T>>(std::move(match_operation), start_position);
     }
     if(is_current_token_of_type(TokenType::Semicolon)){
-        return std::make_unique<ReturnInstruction<T>>(nullptr);
+        return std::make_unique<ReturnInstruction<T>>(nullptr, start_position);
     }
     throw get_syntax_error_exception("expression | match_operation");
 }
@@ -635,6 +651,7 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_return_statement(){
 // match_operation  = Match_keywd, Opening_parenth, expression, {Comma, expression}, Closing_parenth, match_block;
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_operation(){
+    auto start_position = get_current_position();
     if(!check_and_advance(TokenType::Match_keywd)){
         return nullptr;
     }
@@ -647,7 +664,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_operation(){
     auto match_block = try_parse_match_block();
     expect_not_null(match_block, "match_block");
 
-    return std::make_unique<MatchOperation<T>>(std::move(args), std::move(match_block));
+    return std::make_unique<MatchOperation<T>>(std::move(args), std::move(match_block), start_position);
 }
 
 // match_block = Opening_curly, match_line, {Comma, match_line}, Closing_curly;
@@ -711,6 +728,7 @@ std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> ParserBase<T>::try
 // pattern_element = expression | match_expression | Underscore;
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
+    auto start_position = get_current_position();
     if(auto match_expr = try_parse_match_expression()){
         return match_expr;
     }
@@ -718,7 +736,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
         return expr;
     }
     if(check_and_advance(TokenType::Underscore)){
-        return std::make_unique<IExpression<T>>(ExpressionType::UnderscoreExpression);
+        return std::make_unique<SingleArgExpression<T>>(ExpressionType::UnderscoreExpression, nullptr, start_position);
     }
     return nullptr;
 }
@@ -735,22 +753,22 @@ SyntaxErrorException<T> ParserBase<T>::get_syntax_error_exception(const std::bas
 }
 
 template<CharType T>
-Type ParserBase<T>::map_type(TokenType type) const{
+Type ParserBase<T>::map_type(TokenType type) const {
     return type_map.at(type);
 }
 
 template<CharType T>
-ExpressionType ParserBase<T>::map_expression_type(TokenType type) const{
+ExpressionType ParserBase<T>::map_expression_type(TokenType type) const {
     return expression_type_map.at(type);
 }
 
 template<CharType T>
-ExpressionType ParserBase<T>::map_to_match(ExpressionType type) const{
+ExpressionType ParserBase<T>::map_to_match(ExpressionType type) const {
     return match_expression_type_map.at(type);
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_a_type() const{
+bool ParserBase<T>::is_current_token_a_type() const {
     return type_map.contains(current_token.get_type());
 }
 
@@ -760,32 +778,45 @@ Token<T> ParserBase<T>::get_next_token(){
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_of_type(TokenType type) const{
+Position ParserBase<T>::get_current_position() const{
+    return current_token.get_position();
+}
+
+template<CharType T>
+bool ParserBase<T>::is_current_token_of_type(TokenType type) const {
     return current_token.get_type() == type;
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_additive_operator() const{
+bool ParserBase<T>::is_current_token_additive_operator() const {
     return (current_token.get_type() == TokenType::Plus ||
             current_token.get_type() == TokenType::Minus ||
             current_token.get_type() == TokenType::String_concat);
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_multiplicative_operator() const{
+bool ParserBase<T>::is_current_token_multiplicative_operator() const {
     return (current_token.get_type() == TokenType::Multiplication ||
             current_token.get_type() == TokenType::Division ||
             current_token.get_type() == TokenType::Modulo);
 }
 
 template<CharType T>
-bool ParserBase<T>::is_current_token_relation_operator() const{
+bool ParserBase<T>::is_current_token_relation_operator() const {
     return (current_token.get_type() == TokenType::Gt ||
             current_token.get_type() == TokenType::Gte ||
             current_token.get_type() == TokenType::Lt ||
             current_token.get_type() == TokenType::Lte ||
             current_token.get_type() == TokenType::Equals ||
             current_token.get_type() == TokenType::Not_equals);
+}
+
+template<CharType T>
+bool ParserBase<T>::is_current_token_a_literal() const {
+    return (current_token.get_type() == TokenType::Integer_literal ||
+            current_token.get_type() == TokenType::Floating_literal ||
+            current_token.get_type() == TokenType::Boolean_literal ||
+            current_token.get_type() == TokenType::String_literal);
 }
 
 template<CharType T>

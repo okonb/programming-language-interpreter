@@ -4,7 +4,7 @@
 #include "ILexer.hpp"
 #include "Lexer.hpp"
 
-template<CharType T>
+template<CharType T = char>
 class CommentFilterLexer : public ILexer<T>{
 public:
     CommentFilterLexer(ILexer<T> &lex) : 
