@@ -8,9 +8,14 @@
 #include "overload.hpp"
 #include "Interpreter.hpp"
 
+using namespace std::literals;
+
 
 int main(int argc, char** argv){
-    if(argc < 2){
+
+    auto argc_u = static_cast<std::size_t>(argc);
+
+    if(argc_u < 2){
         std::cout << "Please provide program filename as the argument.\n";
         return 1;
     }
@@ -20,8 +25,18 @@ int main(int argc, char** argv){
 
     std::vector<std::string> arguments{};
 
-    for(int i = 2; i < argc; ++i){
-        arguments.push_back(std::string(argv[i]));
+    std::size_t arg_index = 2;
+
+    //skip additional program arguments
+    while(arg_index < argc_u and "--"s != argv[arg_index]){
+        ++arg_index;
+    }
+    //skip --
+    ++arg_index;
+
+    while(arg_index < argc_u){
+        arguments.push_back(std::string(argv[arg_index]));
+        ++arg_index;
     }
 
     int return_code = 1;

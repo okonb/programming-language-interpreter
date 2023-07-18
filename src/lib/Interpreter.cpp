@@ -16,12 +16,12 @@ public:
                 return str.str();
             };
         }
-        else if(type == ExpressionType::EqualsExpression){
+        if(type == ExpressionType::EqualsExpression){
             return [](const std::basic_string<T> &l, const std::basic_string<T> &r){
                 return l == r;
             };
         }
-        else if(type == ExpressionType::NotEqualsExpression){
+        if(type == ExpressionType::NotEqualsExpression){
             return [](const std::basic_string<T> &l, const std::basic_string<T> &r){
                 return l != r;
             };
@@ -92,7 +92,7 @@ void Interpreter<T>::visit(ReturnInstruction<T> &instr){
 
 template<CharType T>
 void Interpreter<T>::visit(AssignmentInstruction<T> &instr){
-    auto name = instr.get_name();
+    auto &name = instr.get_name();
     auto var = get_variable_from_current_context(name);
     current_variable = var;
     if(!var){
@@ -112,7 +112,7 @@ void Interpreter<T>::visit(AssignmentInstruction<T> &instr){
 
 template<CharType T>
 void Interpreter<T>::visit(VarDefinitionInstruction<T> &instr){
-    auto name = instr.get_name();
+    auto &name = instr.get_name();
     if(instr.get_type()->get_type() == Type::Void){
         throw VoidVariableException<T>(name, instr.get_position());
     }
@@ -423,7 +423,7 @@ void Interpreter<T>::visit(MatchOperation<T> &instr){
     bool pattern_good = true;
 
     size_t arguments_length = argument_values.size();
-    if(block->size() == 0){
+    if(block->empty()){
         throw ZeroLengthMatchBlockException<T>(instr.get_position());
     }
     size_t good_line_index = 0;
@@ -447,7 +447,7 @@ void Interpreter<T>::visit(MatchOperation<T> &instr){
                 pattern_good = false;
                 break;
             }
-            else if(current_value == argument_values[i]){
+            if(current_value == argument_values[i]){
                 increment_current_match_index();
                 continue;
             }

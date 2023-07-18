@@ -10,10 +10,10 @@ fun fizzbuzz(n: const int): void {
     temp: int = 1;
     while(temp <= n){
         match(temp % 3, temp % 5){
-            0, 0:   print("fizzbuzz"),
-            0, _:   print("fizz"),
-            _, 0:   print("buzz"),
-            _, _:   print(to_string_int(temp))
+            0, 0:   print("fizzbuzz\n"),
+            0, _:   print("fizz\n"),
+            _, 0:   print("buzz\n"),
+            _, _:   print(to_str_int(temp) | "\n")
         }
         temp = temp + 1;
     }
@@ -120,6 +120,6 @@ fun main(): int{
     if(not is_even2(3)){
         print("ok\n");
     }
-
+    fizzbuzz(15);
     return 0;
 }
