@@ -144,6 +144,13 @@ public:
 };
 
 template<CharType T>
+class RecursionLimitException : public SimpleTextException<T>{
+public:
+    RecursionLimitException(const std::size_t level, const std::basic_string<T> name, const Position &pos) :
+        SimpleTextException<T>{"Recursion limit hit.", "Level: " + std::to_string(level) + ", calling function " + name + ".", pos} {}
+};
+
+template<CharType T>
 class VariableAssignmentTypeMismatchException : public std::runtime_error{
 public:
     VariableAssignmentTypeMismatchException(const std::basic_string<T> &var_n, const TypeIdentifier<T> &var_t, const Type val_t, const Position &pos) :
@@ -257,6 +264,8 @@ private:
     std::basic_ostream<T> &out_stream;
     const std::vector<std::basic_string<T>> program_arguments;
     std::map<std::basic_string<T>, std::basic_fstream<T>> open_files;
+    size_t current_recursion_level;
+    const size_t MAX_RECURSION_LEVEL;
     std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, Type ret_type, bool ret_const,
                                                 const std::initializer_list<std::basic_string<T>> &p_names,
                                                 const std::initializer_list<Type> &p_types,
@@ -277,6 +286,7 @@ private:
     bool is_variable_name_in_current_context(const std::basic_string<T> &name);
     bool is_argument_of_right_type(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
     bool is_argument_a_file(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
+    bool is_recursion_level_exceeded();
     void push_context(Context<T> context);
     void pop_context();
     void push_scope();
@@ -298,6 +308,18 @@ private:
     ExpressionType map_from_match(ExpressionType type) const;
     value_t<T> get_current_match_argument();
     static std::map<ExpressionType, ExpressionType> match_expression_type_map;
+
+    class recursion_level_guard{
+    public:
+        recursion_level_guard(std::size_t &l) : level{l}{
+            level++;
+        }
+        ~recursion_level_guard(){
+            level--;
+        }
+    private:
+        std::size_t &level;
+    };
 };
 
 #endif // !INTERPRETER_HPP

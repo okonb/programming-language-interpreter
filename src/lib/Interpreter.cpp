@@ -47,7 +47,10 @@ std::map<ExpressionType, std::function<value_t<T>(P, R)>> Resolver<T, P, R>::num
 
 template<CharType T>
 Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args) :
-    function_definitions{std::move(prog->give_function_definitions())}, current_value{}, return_flag{false}, match_flag{false}, function_stack{}, out_stream{o_stream}, program_arguments{args} {
+    function_definitions{std::move(prog->give_function_definitions())},
+    current_value{}, return_flag{false}, match_flag{false}, function_stack{},
+    out_stream{o_stream}, program_arguments{args}, current_recursion_level{0ul},
+    MAX_RECURSION_LEVEL{100} /*TODO*/ {
         add_builtins();
     }
 
@@ -362,11 +365,20 @@ void Interpreter<T>::visit(IdentifierExpression<T> &instr){
 
 template<CharType T>
 void Interpreter<T>::visit(FunctionCall<T> &instr){
+
+    recursion_level_guard guard{current_recursion_level};
+
     auto name = instr.get_name(); 
     auto &function = get_function(name);
     if(!function){
         throw FunctionNotDeclaredException<T>(name, instr.get_position());
     }
+
+    
+    if(is_recursion_level_exceeded()){
+        throw RecursionLimitException<T>(current_recursion_level, name, instr.get_position());
+    }
+
     auto &parameters = function->get_parameters();
     auto &arguments = instr.get_arguments();
     std::vector<TypeIdentifier<T>> param_types{};
@@ -562,6 +574,11 @@ bool Interpreter<T>::is_variable_name_in_current_context(const std::basic_string
 template<CharType T>
 bool Interpreter<T>::is_argument_of_right_type(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t){
     return (param_t.get_type() == arg_t.get_type()) && !(!param_t.get_is_const() && arg_t.get_is_const());
+}
+
+template<CharType T>
+bool Interpreter<T>::is_recursion_level_exceeded(){
+    return current_recursion_level > MAX_RECURSION_LEVEL;
 }
 
 template<CharType T>
