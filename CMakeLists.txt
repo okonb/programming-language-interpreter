@@ -31,14 +31,6 @@ target_include_directories(tkom_proj_lib_gcov PUBLIC include)
 target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
 
 
-
-add_library(tkom_proj_lib_gcov STATIC EXCLUDE_FROM_ALL ${proj_LIB})
-
-target_include_directories(tkom_proj_lib_gcov PUBLIC include)
-
-target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
-
-
 add_executable(main src/main.cpp)
 
 target_compile_options(main PUBLIC ${GENERAL_FLAGS} -O3)
