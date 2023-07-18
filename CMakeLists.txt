@@ -4,7 +4,8 @@ project(TKOM_Projekt)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "")
-set(GENERAL_FLAGS   -Wall -Wextra -pedantic -Werror -flto)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(GENERAL_FLAGS   -Wall -Wextra -pedantic -Werror -flto=auto -fanalyzer)
 
 include(FetchContent)
 FetchContent_Declare(

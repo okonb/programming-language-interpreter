@@ -575,13 +575,28 @@ void Interpreter<T>::pop_context(){
 }
 
 template<CharType T>
+void Interpreter<T>::push_scope(){
+    get_current_context().get_scopes().push_back({});
+}
+
+template<CharType T>
+void Interpreter<T>::pop_scope(){
+    get_current_context().get_scopes().pop_back();
+}
+
+template<CharType T>
 void Interpreter<T>::execute_block(std::vector<std::unique_ptr<IInstruction<T>>> &block){
+
+    push_scope();
+
     for(auto &instruction : block){
         instruction->accept(*this);
         if(return_flag){
             return;
         }
     }
+
+    pop_scope();
 }
 
 

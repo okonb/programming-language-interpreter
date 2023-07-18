@@ -19,6 +19,7 @@ int main(int argc, char** argv){
         std::cout << "Please provide program filename as the argument.\n";
         return 1;
     }
+    
     std::string filename = argv[1];
     std::ifstream infile{filename};
     infile.unsetf(std::ios::skipws);

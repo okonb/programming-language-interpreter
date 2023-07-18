@@ -279,6 +279,8 @@ private:
     bool is_argument_a_file(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
     void push_context(Context<T> context);
     void pop_context();
+    void push_scope();
+    void pop_scope();
     void execute_block(std::vector<std::unique_ptr<IInstruction<T>>> &block);
     void add_builtins();
     void run_builtin(const std::basic_string<T> &name);
