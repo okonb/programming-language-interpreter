@@ -99,9 +99,9 @@ public:
     Type map_type(TokenType type) const;
     ExpressionType map_expression_type(TokenType type) const;
     ExpressionType map_to_match(ExpressionType type) const;
-    static std::map<TokenType, Type> type_map;
-    static std::map<TokenType, ExpressionType> expression_type_map;
-    static std::map<ExpressionType, ExpressionType> match_expression_type_map;
+    const static std::map<TokenType, Type> type_map;
+    const static std::map<TokenType, ExpressionType> expression_type_map;
+    const static std::map<ExpressionType, ExpressionType> match_expression_type_map;
 
     UnexpectedTokenException<T> get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location = std::source_location::current());
     SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string<T> &text, const std::source_location &location = std::source_location::current());

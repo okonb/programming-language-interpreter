@@ -1,7 +1,7 @@
 #include "Parser.hpp"
 
 template<CharType T>
-std::map<TokenType, Type> ParserBase<T>::type_map{
+const std::map<TokenType, Type> ParserBase<T>::type_map{
     {TokenType::Integer_type,   Type::Integer},
     {TokenType::Floating_type,  Type::Floating},
     {TokenType::String_type,    Type::String},
@@ -11,7 +11,7 @@ std::map<TokenType, Type> ParserBase<T>::type_map{
 };
 
 template<CharType T>
-std::map<TokenType, ExpressionType> ParserBase<T>::expression_type_map{
+const std::map<TokenType, ExpressionType> ParserBase<T>::expression_type_map{
     {TokenType::Gt,                 ExpressionType::GtExpression},
     {TokenType::Gte,                ExpressionType::GteExpression},
     {TokenType::Lt,                 ExpressionType::LtExpression},
@@ -34,7 +34,7 @@ std::map<TokenType, ExpressionType> ParserBase<T>::expression_type_map{
 };
 
 template<CharType T>
-std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_type_map{
+const std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_type_map{
     {ExpressionType::GtExpression,              ExpressionType::MatchGtExpression},
     {ExpressionType::GteExpression,             ExpressionType::MatchGteExpression},
     {ExpressionType::LtExpression,              ExpressionType::MatchLtExpression},
@@ -127,7 +127,7 @@ std::unique_ptr<ParameterDefinition<T>> ParserBase<T>::try_parse_parameter_defin
 
 template<CharType T>
 std::unique_ptr<TypeIdentifier<T>> ParserBase<T>::try_parse_type_identifier(){
-    bool is_const = check_and_advance(TokenType::Const_keywd);
+    const bool is_const = check_and_advance(TokenType::Const_keywd);
     if(is_const && !is_current_token_a_type()){
         throw get_unexpected_token_exception({TokenType::Integer_type, 
                                               TokenType::Floating_type,
@@ -166,12 +166,12 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_statement_or_control_b
     if(auto statement = try_parse_statement()){
         return statement;
     }
-    else if(auto control_block = try_parse_control_block()){
+    
+    if(auto control_block = try_parse_control_block()){
         return control_block;
     }
-    else{
-        return nullptr;
-    }
+    
+    return nullptr;    
 }
 
 // statement = (var_def_assign_or_funcall | return_statement), Semicolon;
@@ -181,7 +181,8 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_statement(){
         expect_and_advance(TokenType::Semicolon);
         return var_def_assign_or_funcall;
     }
-    else if(auto return_statement = try_parse_return_statement()){
+    
+    if(auto return_statement = try_parse_return_statement()){
         expect_and_advance(TokenType::Semicolon);
         return return_statement;
     }
@@ -374,7 +375,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_logic_factor(){
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
     auto start_position = get_current_position();
-    bool negate = check_and_advance(TokenType::Not);
+    const bool negate = check_and_advance(TokenType::Not);
     auto math_expression_l = try_parse_math_expression();
     if(!math_expression_l && negate){
         throw get_syntax_error_exception("math_expression");
@@ -443,13 +444,13 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
     auto start_position = get_current_position();
-    bool negative = check_and_advance(TokenType::Minus);
+    const bool negative = check_and_advance(TokenType::Minus);
     std::unique_ptr<IExpression<T>> term = nullptr;
     
-    if((term = try_parse_literal())){
+    if(term = try_parse_literal(); term){
         ;
     }
-    else if((term = try_parse_identifier_or_funcall())){
+    else if(term = try_parse_identifier_or_funcall(); term){
         ;
     }
     else if(check_and_advance(TokenType::Opening_parenth)){
@@ -570,13 +571,13 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
     auto start_position = get_current_position();
-    bool negative = check_and_advance(TokenType::Minus);
+    const bool negative = check_and_advance(TokenType::Minus);
     std::unique_ptr<IExpression<T>> term = nullptr;
     
-    if((term = try_parse_literal())){
+    if(term = try_parse_literal(); term){
         ;
     }
-    else if((term = try_parse_identifier_or_funcall())){
+    else if(term = try_parse_identifier_or_funcall(); term){
         ;
     }
     else if(check_and_advance(TokenType::Opening_parenth)){

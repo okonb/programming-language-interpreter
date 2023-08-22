@@ -17,6 +17,7 @@ class FunctionDefinition;
 template<CharType T>
 class IVisitor{
 public:
+    virtual ~IVisitor() = default;
     virtual void visit(FunctionDefinition<T> &instr) = 0;
 
     virtual void visit(ReturnInstruction<T> &instr) = 0;

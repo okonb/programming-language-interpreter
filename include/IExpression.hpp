@@ -53,6 +53,7 @@ template<CharType T>
 class IExpression : public IInstruction<T> {
 public:
     IExpression(ExpressionType t, const Position &pos) : IInstruction<T>{pos}, type{t} {}
+    ~IExpression() override = default;
     const std::basic_string<T> &get_string_repr() const {return expression_string_map.at(type);}
     static const std::basic_string<T> &get_string_repr(ExpressionType t) {return expression_string_map.at(t);}
     ExpressionType get_expression_type() const {return type;}
@@ -62,7 +63,7 @@ public:
     }
 private:
     ExpressionType type;
-    static std::map<ExpressionType, std::basic_string<T>> expression_string_map;
+    const static std::map<ExpressionType, std::basic_string<T>> expression_string_map;
 };
 
 #endif // !IEXPRESSION_HPP

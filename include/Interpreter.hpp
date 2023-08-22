@@ -14,7 +14,6 @@
 #include <map>
 #include <variant>
 #include <fstream>
-#include <iostream>
 
 
 template<CharType T>
@@ -146,8 +145,8 @@ public:
 template<CharType T>
 class RecursionLimitException : public SimpleTextException<T>{
 public:
-    RecursionLimitException(const std::size_t level, const std::basic_string<T> name, const Position &pos) :
-        SimpleTextException<T>{"Recursion limit hit.", "Level: " + std::to_string(level) + ", calling function " + name + ".", pos} {}
+    RecursionLimitException(const std::size_t level, const std::basic_string<T> f_name, const Position &pos) :
+        SimpleTextException<T>{"Recursion limit hit.", "Level: " + std::to_string(level) + ", calling function " + f_name + ".", pos} {}
 };
 
 template<CharType T>
@@ -240,6 +239,7 @@ template<CharType T>
 class Interpreter : public IVisitor<T>{
 public:
     Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args);
+    ~Interpreter() override = default;
     int64_t run(const std::basic_string<T> &to_start_name = "main");
     void visit(FunctionDefinition<T> &instr) override;
     void visit(ReturnInstruction<T> &instr) override;
@@ -248,11 +248,11 @@ public:
     void visit(IfInstruction<T> &instr) override;
     void visit(WhileInstruction<T> &instr) override;
 
-    void visit(SingleArgExpression<T> &instr) override;
-    void visit(TwoArgExpression<T> &instr) override;
-    void visit(LiteralExpression<T> &instr) override;
-    void visit(IdentifierExpression<T> &instr) override;
-    void visit(FunctionCall<T> &instr) override;
+    void visit(SingleArgExpression<T> &expr) override;
+    void visit(TwoArgExpression<T> &expr) override;
+    void visit(LiteralExpression<T> &expr) override;
+    void visit(IdentifierExpression<T> &expr) override;
+    void visit(FunctionCall<T> &expr) override;
     
     void visit(MatchOperation<T> &instr) override;
 private:
@@ -307,7 +307,7 @@ private:
     bool is_expression_match(ExpressionType type) const;
     ExpressionType map_from_match(ExpressionType type) const;
     value_t<T> get_current_match_argument();
-    static std::map<ExpressionType, ExpressionType> match_expression_type_map;
+    const static std::map<ExpressionType, ExpressionType> match_expression_type_map;
 
     class recursion_level_guard{
     public:

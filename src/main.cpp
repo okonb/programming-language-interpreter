@@ -1,12 +1,10 @@
-#include <iostream>
-#include <sstream>
 #include "Parser.hpp"
-#include "Lexer.hpp"
 #include "CommentFilterLexer.hpp"
 #include "Interpreter.hpp"
 #include "NumericType.hpp"
 #include "overload.hpp"
-#include "Interpreter.hpp"
+#include <iostream>
+#include <sstream>
 
 using namespace std::literals;
 
@@ -20,8 +18,7 @@ int main(int argc, char** argv){
         return 1;
     }
     
-    std::string filename = argv[1];
-    std::ifstream infile{filename};
+    std::ifstream infile{argv[1]};
     infile.unsetf(std::ios::skipws);
 
     std::vector<std::string> arguments{};
@@ -36,7 +33,7 @@ int main(int argc, char** argv){
     ++arg_index;
 
     while(arg_index < argc_u){
-        arguments.push_back(std::string(argv[arg_index]));
+        arguments.emplace_back(argv[arg_index]);
         ++arg_index;
     }
 
@@ -48,16 +45,16 @@ int main(int argc, char** argv){
     std::unique_ptr<Program<char>> program = nullptr;
 
     try{
-        program = std::make_unique<Program<char>>(std::move(parser.parse()));
+        program = std::make_unique<Program<char>>(parser.parse());
         Interpreter<char> inter{std::move(program), std::cout, arguments};
-        return_code = inter.run();
+        return_code = static_cast<int>(inter.run());
     }
     catch(TokenizationError<char> &e){
         std::cerr << e.what() << "\nAt position " << e.get_position().line << ":" << e.get_position().column << "\n";
     }
     catch(UnexpectedTokenException<char> &e){
         std::cerr << e.what() << " in parsing function " << e.get_function_throwing_name() << ". Expected:\n";
-        for(auto &token : e.get_expected_token_list()){
+        for(const auto &token : e.get_expected_token_list()){
             std::cerr << Lexer<char>::get_token_text(token) << ", ";
         }
         std::cerr << "\ngot: " << Lexer<char>::get_token_text(e.get_received_token().get_type()) << " at "
@@ -91,11 +88,11 @@ int main(int argc, char** argv){
 
     catch(FunctionArgumentMismatchException<char> &e){
         std::cerr << e.what() << " Function name: " << e.get_function_name() << ", parameter types:\n";
-        for(auto &type : e.get_expected_type_list()){
+        for(const auto &type : e.get_expected_type_list()){
             std::cerr << type.get_str_representation() << ", ";
         }
         std::cerr << "\nGot instead:\n";
-        for(auto &type : e.get_gotten_type_list()){
+        for(const auto &type : e.get_gotten_type_list()){
             std::cerr << type.get_str_representation() << ", ";
         }
         std::cerr << "\nAt " <<e.get_position().line << ":" << e.get_position().column << "\n";
@@ -103,15 +100,15 @@ int main(int argc, char** argv){
 
     catch(OperatorArgumentMismatchException<char> &e){
         std::cerr << e.what() << " Oparator name: " << e.get_operator_name() << ", left expected types:\n";
-        for(auto &type : e.get_expected_type_list_left()){
+        for(const auto &type : e.get_expected_type_list_left()){
             std::cerr << TypeIdentifier<char>::get_type_text(type) << ", ";
         }
         std::cerr << "\nleft expected types:\n";
-        for(auto &type : e.get_expected_type_list_right()){
+        for(const auto &type : e.get_expected_type_list_right()){
             std::cerr << TypeIdentifier<char>::get_type_text(type) << ", ";
         }
         std::cerr << "\ngotten types:\n";
-        for(auto &type : e.get_gotten_type_list()){
+        for(const auto &type : e.get_gotten_type_list()){
             std::cerr << TypeIdentifier<char>::get_type_text(type) << ", ";
         }
         std::cerr << "\nAt " <<e.get_position().line << ":" << e.get_position().column << "\n";

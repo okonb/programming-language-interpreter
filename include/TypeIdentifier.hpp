@@ -42,7 +42,7 @@ public:
 private:
     Type type;
     bool is_const;
-    static std::map<Type, std::basic_string<T>> type_map;
+    const static std::map<Type, std::basic_string<T>> type_map;
 };
 
 #endif // TYPE_IDENTIFIER_HPP

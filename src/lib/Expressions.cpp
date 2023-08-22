@@ -1,7 +1,7 @@
 #include "Expressions.hpp"
 
 template<>
-std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expression_string_map{
+const std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expression_string_map{
     {ExpressionType::Expression,                    "Expression"},
     {ExpressionType::PlusExpression,                "PlusExpression"},
     {ExpressionType::MinusExpression,               "MinusExpression"},
@@ -43,6 +43,50 @@ std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expression_
     {ExpressionType::UnderscoreExpression,          "UnderscoreExpression"},
     {ExpressionType::IdentifierExpression,          "IdentifierExpression"},
 };
-
+/*
+template<>
+const std::map<ExpressionType, std::basic_string<wchar_t>> IExpression<wchar_t>::expression_string_map{
+    {ExpressionType::Expression,                    L"Expression"},
+    {ExpressionType::PlusExpression,                L"PlusExpression"},
+    {ExpressionType::MinusExpression,               L"MinusExpression"},
+    {ExpressionType::StrConcatExpression,           L"StrConcatExpression"},
+    {ExpressionType::MultiplicationExpression,      L"MultiplicationExpression"},
+    {ExpressionType::DivisionExpression,            L"DivisionExpression"},
+    {ExpressionType::ModuloExpression,              L"ModuloExpression"},
+    {ExpressionType::AndExpression,                 L"AndExpression"},
+    {ExpressionType::OrExpression,                  L"OrExpression"},
+    {ExpressionType::LtExpression,                  L"LtExpression"},
+    {ExpressionType::GtExpression,                  L"GtExpression"},
+    {ExpressionType::LteExpression,                 L"LteExpression"},
+    {ExpressionType::GteExpression,                 L"GteExpression"},
+    {ExpressionType::EqualsExpression,              L"EqualsExpression"},
+    {ExpressionType::NotEqualsExpression,           L"NotEqualsExpression"},
+    {ExpressionType::NotExpression,                 L"NotExpression"},
+    {ExpressionType::NegateNumberExpression,        L"NegateNumberExpression"},
+    {ExpressionType::MatchPlusExpression,           L"MatchPlusExpression"},
+    {ExpressionType::MatchMinusExpression,          L"MatchMinusExpression"},
+    {ExpressionType::MatchStrConcatExpression,      L"MatchStrConcatExpression"},
+    {ExpressionType::MatchMultiplicationExpression, L"MatchMultiplicationExpression"},
+    {ExpressionType::MatchDivisionExpression,       L"MatchDivisionExpression"},
+    {ExpressionType::MatchModuloExpression,         L"MatchModuloExpression"},
+    {ExpressionType::MatchAndExpression,            L"MatchAndExpression"},
+    {ExpressionType::MatchOrExpression,             L"MatchOrExpression"},
+    {ExpressionType::MatchLtExpression,             L"MatchLtExpression"},
+    {ExpressionType::MatchGtExpression,             L"MatchGtExpression"},
+    {ExpressionType::MatchLteExpression,            L"MatchLteExpression"},
+    {ExpressionType::MatchGteExpression,            L"MatchGteExpression"},
+    {ExpressionType::MatchEqualsExpression,         L"MatchEqualsExpression"},
+    {ExpressionType::MatchNotEqualsExpression,      L"MatchNotEqualsExpression"},
+    {ExpressionType::MatchNegateNumberExpression,   L"MatchNegateNumberExpressio"},
+    {ExpressionType::IntegerLiteralExpression,      L"IntegerLiteralExpression"},
+    {ExpressionType::FloatingLiteralExpression,     L"FloatingLiteralExpression"},
+    {ExpressionType::StringLiteralExpression,       L"StringLiteralExpression"},
+    {ExpressionType::BooleanLiteralExpression,      L"BooleanLiteralExpression"},
+    {ExpressionType::FunctionCallExpression,        L"FunctionCallExpression"},
+    {ExpressionType::MatchExpression,               L"MatchExpression"},
+    {ExpressionType::UnderscoreExpression,          L"UnderscoreExpression"},
+    {ExpressionType::IdentifierExpression,          L"IdentifierExpression"},
+};
+*/
 template class SingleArgExpression<char>;
 template class TwoArgExpression<char>;
