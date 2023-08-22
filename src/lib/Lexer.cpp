@@ -7,82 +7,81 @@
 using std::string_view_literals::operator""sv;
 
 template<>
-constexpr std::array<std::pair<TokenType, std::basic_string_view<char>>, 46UL> Lexer<char>::token_to_text_data{{
-    {TokenType::And             , "and"             },
-    {TokenType::Or              , "or"              },
-    {TokenType::Not             , "not"             },
-    {TokenType::True            , "true"            },
-    {TokenType::False           , "false"           },
-    {TokenType::Integer_type    , "int"             },
-    {TokenType::Floating_type   , "float"           },
-    {TokenType::String_type     , "str"             },
-    {TokenType::File_type       , "file"            },
-    {TokenType::Bool_type       , "bool"            },
-    {TokenType::Void_type       , "void"            },
-    {TokenType::Return_keywd    , "return"          },
-    {TokenType::Function_keywd  , "fun"             },
-    {TokenType::If_keywd        , "if"              },
-    {TokenType::Else_keywd      , "else"            },
-    {TokenType::While_keywd     , "while"           },
-    {TokenType::Const_keywd     , "const"           },
-    {TokenType::Match_keywd     , "match"           },
-    {TokenType::Opening_parenth , "("               },
-    {TokenType::Closing_parenth , ")"               },
-    {TokenType::Opening_curly   , "{"               },
-    {TokenType::Closing_curly   , "}"               },
-    {TokenType::Colon           , ":"               },
-    {TokenType::Semicolon       , ";"               },
-    {TokenType::Comma           , ","               },
-    {TokenType::Underscore      , "_"               },
-    {TokenType::Assign          , "="               },
-    {TokenType::Plus            , "+"               },
-    {TokenType::Minus           , "-"               },
-    {TokenType::Multiplication  , "*"               },
-    {TokenType::Division        , "/"               },
-    {TokenType::Modulo          , "%"               },
-    {TokenType::String_concat   , "|"               },
-    {TokenType::Gt              , ">"               },
-    {TokenType::Lt              , "<"               },
-    {TokenType::Gte             , ">="              },
-    {TokenType::Lte             , "<="              },
-    {TokenType::Equals          , "=="              },
-    {TokenType::Not_equals      , "!="              },
-    {TokenType::ETX_token       , "ETX_TOKEN"      },
-    {TokenType::Integer_literal , "Integer_literal" },
-    {TokenType::Floating_literal, "Floating_literal"},
-    {TokenType::String_literal  , "String_literal"  },
-    {TokenType::Boolean_literal , "Boolean_literal" },
-    {TokenType::Identifier      , "Identifier"      },
-    {TokenType::Comment         , "Comment"         },
-}};
+constexpr light_map<TokenType, std::basic_string_view<char>, 46UL> Lexer<char>::token_to_text{
+    std::array<std::pair<TokenType, std::basic_string_view<char>>, 46UL>{{
+        {TokenType::And             , "and"             },
+        {TokenType::Or              , "or"              },
+        {TokenType::Not             , "not"             },
+        {TokenType::True            , "true"            },
+        {TokenType::False           , "false"           },
+        {TokenType::Integer_type    , "int"             },
+        {TokenType::Floating_type   , "float"           },
+        {TokenType::String_type     , "str"             },
+        {TokenType::File_type       , "file"            },
+        {TokenType::Bool_type       , "bool"            },
+        {TokenType::Void_type       , "void"            },
+        {TokenType::Return_keywd    , "return"          },
+        {TokenType::Function_keywd  , "fun"             },
+        {TokenType::If_keywd        , "if"              },
+        {TokenType::Else_keywd      , "else"            },
+        {TokenType::While_keywd     , "while"           },
+        {TokenType::Const_keywd     , "const"           },
+        {TokenType::Match_keywd     , "match"           },
+        {TokenType::Opening_parenth , "("               },
+        {TokenType::Closing_parenth , ")"               },
+        {TokenType::Opening_curly   , "{"               },
+        {TokenType::Closing_curly   , "}"               },
+        {TokenType::Colon           , ":"               },
+        {TokenType::Semicolon       , ";"               },
+        {TokenType::Comma           , ","               },
+        {TokenType::Underscore      , "_"               },
+        {TokenType::Assign          , "="               },
+        {TokenType::Plus            , "+"               },
+        {TokenType::Minus           , "-"               },
+        {TokenType::Multiplication  , "*"               },
+        {TokenType::Division        , "/"               },
+        {TokenType::Modulo          , "%"               },
+        {TokenType::String_concat   , "|"               },
+        {TokenType::Gt              , ">"               },
+        {TokenType::Lt              , "<"               },
+        {TokenType::Gte             , ">="              },
+        {TokenType::Lte             , "<="              },
+        {TokenType::Equals          , "=="              },
+        {TokenType::Not_equals      , "!="              },
+        {TokenType::ETX_token       , "ETX_TOKEN"      },
+        {TokenType::Integer_literal , "Integer_literal" },
+        {TokenType::Floating_literal, "Floating_literal"},
+        {TokenType::String_literal  , "String_literal"  },
+        {TokenType::Boolean_literal , "Boolean_literal" },
+        {TokenType::Identifier      , "Identifier"      },
+        {TokenType::Comment         , "Comment"         },
+    }}
+};
+
 
 template<>
-constexpr light_map<TokenType, std::basic_string_view<char>, 46UL> Lexer<char>::token_to_text{token_to_text_data};
-
-template<>
-constexpr std::array<std::pair<std::basic_string_view<char>, TokenType>, 18UL> Lexer<char>::keyword_lookup_data{{
-    {"and"sv,   TokenType::And},
-    {"or"sv,    TokenType::Or},
-    {"not"sv,   TokenType::Not},
-    {"true"sv,  TokenType::True},
-    {"false"sv, TokenType::False},
-    {"int"sv,   TokenType::Integer_type},
-    {"float"sv, TokenType::Floating_type},
-    {"str"sv,   TokenType::String_type},
-    {"file"sv,  TokenType::File_type},
-    {"bool"sv,  TokenType::Bool_type},
-    {"void"sv,  TokenType::Void_type},
-    {"return"sv,TokenType::Return_keywd},
-    {"fun"sv,   TokenType::Function_keywd},
-    {"if"sv,    TokenType::If_keywd},
-    {"else"sv,  TokenType::Else_keywd},
-    {"while"sv, TokenType::While_keywd},
-    {"const"sv, TokenType::Const_keywd},
-    {"match"sv, TokenType::Match_keywd},
-}};
-
-template<>
-constexpr light_map<std::basic_string_view<char>, TokenType, 18UL> Lexer<char>::keyword_lookup{keyword_lookup_data};
+constexpr light_map<std::basic_string_view<char>, TokenType, 18UL> Lexer<char>::keyword_lookup{
+    std::array<std::pair<std::basic_string_view<char>, TokenType>, 18UL>{{
+        {"and"sv,   TokenType::And},
+        {"or"sv,    TokenType::Or},
+        {"not"sv,   TokenType::Not},
+        {"true"sv,  TokenType::True},
+        {"false"sv, TokenType::False},
+        {"int"sv,   TokenType::Integer_type},
+        {"float"sv, TokenType::Floating_type},
+        {"str"sv,   TokenType::String_type},
+        {"file"sv,  TokenType::File_type},
+        {"bool"sv,  TokenType::Bool_type},
+        {"void"sv,  TokenType::Void_type},
+        {"return"sv,TokenType::Return_keywd},
+        {"fun"sv,   TokenType::Function_keywd},
+        {"if"sv,    TokenType::If_keywd},
+        {"else"sv,  TokenType::Else_keywd},
+        {"while"sv, TokenType::While_keywd},
+        {"const"sv, TokenType::Const_keywd},
+        {"match"sv, TokenType::Match_keywd},
+    }}
+};
 
 /*
 template<>
@@ -107,41 +106,39 @@ const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::keyword_lo
     {L"match",   TokenType::Match_keywd},
 };
 */
-template<CharType T>
-constexpr std::array<std::pair<T, TokenType>, 17UL> Lexer<T>::single_char_operator_lookup_data{{
-    {'(',   TokenType::Opening_parenth},
-    {')',   TokenType::Closing_parenth},
-    {'{',   TokenType::Opening_curly},
-    {'}',   TokenType::Closing_curly},
-    {':',   TokenType::Colon},
-    {';',   TokenType::Semicolon},
-    {',',   TokenType::Comma},
-    {'_',   TokenType::Underscore},
-    {'=',   TokenType::Assign},
-    {'+',   TokenType::Plus},
-    {'-',   TokenType::Minus},
-    {'*',   TokenType::Multiplication},
-    {'/',   TokenType::Division},
-    {'%',   TokenType::Modulo},
-    {'|',   TokenType::String_concat},
-    {'>',   TokenType::Gt},
-    {'<',   TokenType::Lt},
-}};
-template<CharType T>
-constexpr light_map<T, TokenType, 17UL> Lexer<T>::single_char_operator_lookup{Lexer<T>::single_char_operator_lookup_data};
 
+template<CharType T>
+constexpr light_map<T, TokenType, 17UL> Lexer<T>::single_char_operator_lookup{
+    std::array<std::pair<T, TokenType>, 17UL> {{
+        {'(',   TokenType::Opening_parenth},
+        {')',   TokenType::Closing_parenth},
+        {'{',   TokenType::Opening_curly},
+        {'}',   TokenType::Closing_curly},
+        {':',   TokenType::Colon},
+        {';',   TokenType::Semicolon},
+        {',',   TokenType::Comma},
+        {'_',   TokenType::Underscore},
+        {'=',   TokenType::Assign},
+        {'+',   TokenType::Plus},
+        {'-',   TokenType::Minus},
+        {'*',   TokenType::Multiplication},
+        {'/',   TokenType::Division},
+        {'%',   TokenType::Modulo},
+        {'|',   TokenType::String_concat},
+        {'>',   TokenType::Gt},
+        {'<',   TokenType::Lt},
+    }}
+};
 
 template<>
-constexpr std::array<std::pair<std::basic_string_view<char>, TokenType>, 4UL> Lexer<char>::two_char_operator_lookup_data{{
-    {">="sv,    TokenType::Gte},
-    {"<="sv,    TokenType::Lte},
-    {"=="sv,    TokenType::Equals},
-    {"!="sv,    TokenType::Not_equals},
-}};
-
-
-template<>
-constexpr light_map<std::basic_string_view<char>, TokenType, 4UL> Lexer<char>::two_char_operator_lookup{two_char_operator_lookup_data};
+constexpr light_map<std::basic_string_view<char>, TokenType, 4UL> Lexer<char>::two_char_operator_lookup{
+    std::array<std::pair<std::basic_string_view<char>, TokenType>, 4UL> {{
+        {">="sv,    TokenType::Gte},
+        {"<="sv,    TokenType::Lte},
+        {"=="sv,    TokenType::Equals},
+        {"!="sv,    TokenType::Not_equals},
+    }}
+};
 /*
 template<>
 const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::two_char_operator_lookup{
@@ -152,34 +149,33 @@ const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::two_char_o
 };
 */
 
-template<CharType T>
-constexpr std::array<std::pair<T, T>, 4UL> Lexer<T>::two_char_operators_data{{
-    {'>', '='},
-    {'<', '='},
-    {'=', '='},
-    {'!', '='},
-}};
 
 template<CharType T>
-constexpr light_map<T, T, 4UL> Lexer<T>::two_char_operators{two_char_operators_data};
+constexpr light_map<T, T, 4UL> Lexer<T>::two_char_operators{
+    std::array<std::pair<T, T>, 4UL>{{
+        {'>', '='},
+        {'<', '='},
+        {'=', '='},
+        {'!', '='},
+    }}
+};
 
 
 template<CharType T>
-constexpr std::array<std::pair<T, T>, 10UL> Lexer<T>::escapes_data{{
-    {'a',   '\a'},
-    {'b',   '\b'},
-    {'f',   '\f'},
-    {'n',   '\n'},
-    {'r',   '\r'},
-    {'t',   '\t'},
-    {'v',   '\v'},
-    {'\\',  '\\'},
-    {'\"',  '\"'},
-    {'\?',  '\?'},  
-}};
-
-template<CharType T>
-constexpr light_map<T, T, 10UL> Lexer<T>::escapes{escapes_data};
+constexpr light_map<T, T, 10UL> Lexer<T>::escapes{
+    std::array<std::pair<T, T>, 10UL>{{
+        {'a',   '\a'},
+        {'b',   '\b'},
+        {'f',   '\f'},
+        {'n',   '\n'},
+        {'r',   '\r'},
+        {'t',   '\t'},
+        {'v',   '\v'},
+        {'\\',  '\\'},
+        {'\"',  '\"'},
+        {'\?',  '\?'},  
+    }}
+};
 
 
 template<CharType T>

@@ -61,22 +61,11 @@ private:
     std::basic_istream<T> &input_stream;
     std::optional<std::basic_string<T>> newline_sequence;
     
-    static const std::array<std::pair<TokenType, std::basic_string_view<T>>, 46UL> token_to_text_data;
     static const light_map<TokenType, std::basic_string_view<T>, 46UL> token_to_text;
-
-    static const std::array<std::pair<std::basic_string_view<T>, TokenType>, 18UL> keyword_lookup_data;
     static const light_map<std::basic_string_view<T>, TokenType, 18UL> keyword_lookup;
-
-    static const std::array<std::pair<T, TokenType>, 17UL> single_char_operator_lookup_data;
     static const light_map<T, TokenType, 17UL> single_char_operator_lookup;
-
-    static const std::array<std::pair<std::basic_string_view<T>, TokenType>, 4UL> two_char_operator_lookup_data;
     static const light_map<std::basic_string_view<T>, TokenType, 4UL> two_char_operator_lookup;
-
-    static const std::array<std::pair<T, T>, 4UL> two_char_operators_data;
     static const light_map<T, T, 4UL> two_char_operators;
-
-    static const std::array<std::pair<T, T>, 10UL> escapes_data;
     static const light_map<T, T, 10UL> escapes;
 
 };
