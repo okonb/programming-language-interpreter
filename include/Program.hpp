@@ -2,7 +2,6 @@
 #define PROGRAM_HPP
 
 #include "FunctionDefinition.hpp"
-#include "ISelfPrintable.hpp"
 #include "CharType.hpp"
 #include <vector>
 #include <string>
@@ -24,7 +23,7 @@ private:
 
 // cannot have multiple functions of same name
 template<CharType T = char>
-class Program : public ISelfPrintable<T>{
+class Program{
 public:
     Program(std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> functions) :
         function_definitions{std::make_unique<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>>()} {
@@ -41,13 +40,14 @@ public:
             function_definitions->insert(std::make_pair(name, std::move(function)));
         }
     }
-    const std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> &get_function_definitions() {
+    const std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> &get_function_definitions() const {
         return function_definitions;
     };
     std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> give_function_definitions(){
         return std::move(function_definitions);
     }
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
+    //TODO
+    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const {
         this->print_n_spaces(stream, level);
         stream << "Program\n";
         for(const auto &[name, function] : *function_definitions){

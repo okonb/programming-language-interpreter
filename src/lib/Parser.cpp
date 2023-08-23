@@ -1,5 +1,7 @@
 #include "Parser.hpp"
 
+
+
 template<CharType T>
 const std::map<TokenType, Type> ParserBase<T>::type_map{
     {TokenType::Integer_type,   Type::Integer},

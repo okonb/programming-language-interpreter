@@ -3,8 +3,12 @@
 #include "Interpreter.hpp"
 #include "NumericType.hpp"
 #include "overload.hpp"
+#include "ProgramTreePrinter.hpp"
 #include <iostream>
 #include <sstream>
+
+constexpr bool PRINT_TREE_BEFORE_EXECUTION = true;
+
 
 using namespace std::literals;
 
@@ -46,6 +50,9 @@ int main(int argc, char** argv){
 
     try{
         program = std::make_unique<Program<char>>(parser.parse());
+        if constexpr(PRINT_TREE_BEFORE_EXECUTION){
+            ProgramTreePrinter<char>{std::cout}.print_program(*program);
+        }
         Interpreter<char> inter{std::move(program), std::cout, arguments};
         return_code = static_cast<int>(inter.run());
     }

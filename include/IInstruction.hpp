@@ -3,11 +3,10 @@
 
 #include "CharType.hpp"
 #include "Position.hpp"
-#include "ISelfPrintable.hpp"
 #include "IVisitable.hpp"
 
 template<CharType T = char>
-class IInstruction : public IVisitable<T>, public ISelfPrintable<T>{
+class IInstruction : public IVisitable<T>{
 public:
     IInstruction(const Position &pos) : position{pos} {}
     ~IInstruction() override = default;

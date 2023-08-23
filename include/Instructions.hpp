@@ -26,17 +26,7 @@ public:
     ReturnInstruction(std::unique_ptr<IExpression<T>> e, const Position &pos) :
         IInstruction<T>{pos}, expression(std::move(e)) {}
     ~ReturnInstruction() override = default;
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        this->print_n_spaces(stream, level);
-        stream << "ReturnInstruction:\n";
-        if(expression){
-            expression->print_self(stream, level + 1);
-        }
-        else{
-            this->print_n_spaces(stream, level + 1);
-            stream << "void\n";
-        }
-    }
+    
     std::unique_ptr<IExpression<T>> const &get_expression(){return expression;}
     void accept(IVisitor<T> &visitor) override{ visitor.visit(*this); }
 private:
@@ -49,11 +39,7 @@ public:
     AssignmentInstruction(const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
         IInstruction<T>{pos}, name{n}, expression(std::move(e)) {}
     ~AssignmentInstruction() override = default;
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        this->print_n_spaces(stream, level);
-        stream << "AssignmentInstruction: " << name << " = \n";
-        expression->print_self(stream, level + 1);
-    }
+    
     const std::basic_string<T> &get_name() const {return name;}
     const std::unique_ptr<IExpression<T>> &get_expression() const {return expression;}
     void accept(IVisitor<T> &visitor) override{ visitor.visit(*this); }
@@ -68,11 +54,7 @@ public:
     VarDefinitionInstruction(std::unique_ptr<TypeIdentifier<T>> &t, const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
         IInstruction<T>{pos}, type{std::move(t)}, name{n}, expression(std::move(e)) {}
     ~VarDefinitionInstruction() override = default;
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        this->print_n_spaces(stream, level);
-        stream << "VarDefinitionInstruction: " << name << " : " << type->get_str_representation() << " = \n";
-        expression->print_self(stream, level + 1);
-    }
+    
     const std::unique_ptr<TypeIdentifier<T>> &get_type() const {return type;}
     const std::basic_string<T> &get_name() const {return name;}
     std::unique_ptr<IExpression<T>> const &get_expression() const {return expression;}
@@ -90,25 +72,7 @@ public:
     IfInstruction(std::unique_ptr<IExpression<T>> cond, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> block, std::unique_ptr<IInstruction<T>> else_b, const Position &pos) :
         IInstruction<T>{pos}, condition(std::move(cond)), code_block(std::move(block)), else_block{std::move(else_b)} {}
     ~IfInstruction() override = default;
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        if(condition){
-            this->print_n_spaces(stream, level);
-            stream << "IfInstruction\n";
-            this->print_n_spaces(stream, level + 1);
-            stream << "condition:\n";
-            condition->print_self(stream, level + 2);
-        }
-        this->print_n_spaces(stream, level + 1);
-        stream << "block:\n";
-        for(const auto &expression : *code_block){
-            expression->print_self(stream, level + 2);
-        }
-        if(else_block){
-            this->print_n_spaces(stream, level + 1);
-            stream << "Else\n";
-            else_block->print_self(stream, level + 1);
-        }
-    }
+    
     std::unique_ptr<IExpression<T>> const &get_condition() const {return condition;}
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> const &get_code_block() const {return code_block;}
     std::unique_ptr<IInstruction<T>> const &get_else_block() const {return else_block;}
@@ -125,18 +89,7 @@ public:
     WhileInstruction(std::unique_ptr<IExpression<T>> cond, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> block, const Position &pos) :
         IInstruction<T>{pos}, condition(std::move(cond)), code_block(std::move(block)) {}
     ~WhileInstruction() override = default;
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        this->print_n_spaces(stream, level);
-        stream << "WhileInstruction\n";
-        this->print_n_spaces(stream, level + 1);
-        stream << "condition:\n";
-        condition->print_self(stream, level + 2);
-        this->print_n_spaces(stream, level + 1);
-        stream << "block:\n";
-        for(const auto &expression : *code_block){
-            expression->print_self(stream, level + 2);
-        }
-    }
+    
     std::unique_ptr<IExpression<T>> const &get_condition() const {return condition;}
     std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> const &get_code_block() const {return code_block;}
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }

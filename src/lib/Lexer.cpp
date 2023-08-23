@@ -7,7 +7,7 @@
 using std::string_view_literals::operator""sv;
 
 template<>
-constexpr light_map<TokenType, std::basic_string_view<char>, 46UL> Lexer<char>::token_to_text{
+constinit const light_map<TokenType, std::basic_string_view<char>, 46UL> Lexer<char>::token_to_text{
     std::array<std::pair<TokenType, std::basic_string_view<char>>, 46UL>{{
         {TokenType::And             , "and"             },
         {TokenType::Or              , "or"              },
@@ -60,7 +60,7 @@ constexpr light_map<TokenType, std::basic_string_view<char>, 46UL> Lexer<char>::
 
 
 template<>
-constexpr light_map<std::basic_string_view<char>, TokenType, 18UL> Lexer<char>::keyword_lookup{
+constinit const light_map<std::basic_string_view<char>, TokenType, 18UL> Lexer<char>::keyword_lookup{
     std::array<std::pair<std::basic_string_view<char>, TokenType>, 18UL>{{
         {"and"sv,   TokenType::And},
         {"or"sv,    TokenType::Or},
@@ -108,7 +108,7 @@ const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::keyword_lo
 */
 
 template<CharType T>
-constexpr light_map<T, TokenType, 17UL> Lexer<T>::single_char_operator_lookup{
+constinit const light_map<T, TokenType, 17UL> Lexer<T>::single_char_operator_lookup{
     std::array<std::pair<T, TokenType>, 17UL> {{
         {'(',   TokenType::Opening_parenth},
         {')',   TokenType::Closing_parenth},
@@ -131,7 +131,7 @@ constexpr light_map<T, TokenType, 17UL> Lexer<T>::single_char_operator_lookup{
 };
 
 template<>
-constexpr light_map<std::basic_string_view<char>, TokenType, 4UL> Lexer<char>::two_char_operator_lookup{
+constinit const light_map<std::basic_string_view<char>, TokenType, 4UL> Lexer<char>::two_char_operator_lookup{
     std::array<std::pair<std::basic_string_view<char>, TokenType>, 4UL> {{
         {">="sv,    TokenType::Gte},
         {"<="sv,    TokenType::Lte},
@@ -151,7 +151,7 @@ const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::two_char_o
 
 
 template<CharType T>
-constexpr light_map<T, T, 4UL> Lexer<T>::two_char_operators{
+constinit const light_map<T, T, 4UL> Lexer<T>::two_char_operators{
     std::array<std::pair<T, T>, 4UL>{{
         {'>', '='},
         {'<', '='},
@@ -162,7 +162,7 @@ constexpr light_map<T, T, 4UL> Lexer<T>::two_char_operators{
 
 
 template<CharType T>
-constexpr light_map<T, T, 10UL> Lexer<T>::escapes{
+constinit const light_map<T, T, 10UL> Lexer<T>::escapes{
     std::array<std::pair<T, T>, 10UL>{{
         {'a',   '\a'},
         {'b',   '\b'},

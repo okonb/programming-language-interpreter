@@ -57,10 +57,7 @@ public:
     const std::basic_string<T> &get_string_repr() const {return expression_string_map.at(type);}
     static const std::basic_string<T> &get_string_repr(ExpressionType t) {return expression_string_map.at(t);}
     ExpressionType get_expression_type() const {return type;}
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        this->print_n_spaces(stream, level);
-        stream << this->get_string_repr() << "\n";
-    }
+    
 private:
     ExpressionType type;
     const static std::map<ExpressionType, std::basic_string<T>> expression_string_map;
