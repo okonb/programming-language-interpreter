@@ -46,15 +46,7 @@ public:
     std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> give_function_definitions(){
         return std::move(function_definitions);
     }
-    //TODO
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const {
-        this->print_n_spaces(stream, level);
-        stream << "Program\n";
-        for(const auto &[name, function] : *function_definitions){
-            function->print_self(stream, level + 1);
-        }
-        stream << "\n";
-    }
+    
 private:
     std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
 };

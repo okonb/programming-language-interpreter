@@ -4,9 +4,11 @@
 
 template <CharType T>
 void ProgramTreePrinter<T>::print_program(const Program<T> &program){
+    stream << "Program\n";
     for(const auto &function : *program.get_function_definitions()){
         function.second->accept(*this);
     }
+    stream << "\n";
 }
 
 template <CharType T>

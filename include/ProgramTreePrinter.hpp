@@ -17,9 +17,9 @@ public:
 
 private:
     std::basic_ostream<T> &stream;
-    int level;
+    size_t level;
 
-    void print_spacing(const int additional_spaces = 0) const {
+    void print_spacing(const size_t additional_spaces = 0) const {
         for(size_t i = 0; i < level + additional_spaces; ++i)
             stream << " |";
     }
@@ -41,10 +41,10 @@ private:
 
     class level_guard{
     public:
-        level_guard(int &l) : level{l} { level++; }
+        level_guard(size_t &l) : level{l} { level++; }
         ~level_guard() { level--; }
     private:
-        int &level;
+        size_t &level;
     };
 
     level_guard get_guard(){

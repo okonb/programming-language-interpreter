@@ -5,6 +5,7 @@
 #include "Parser.hpp"
 #include "CommentFilterLexer.hpp"
 #include "Interpreter.hpp"
+#include "ProgramTreePrinter.hpp"
 
 // Lexer tests
 
@@ -852,7 +853,7 @@ TEST(ParserTest, Function_test1){
   ASSERT_EQ(param2->get_type()->get_is_const(), false);
   ASSERT_EQ(param2->get_type()->get_type(), Type::Floating);
   ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_block()->size(), 0);
-  ASSERT_NO_THROW(program.print_self(std::cout));
+  ASSERT_NO_THROW(ProgramTreePrinter<char>{std::cout}.print_program(program));
 }
 
 TEST(ParserTest, check_and_advance){
@@ -1568,7 +1569,7 @@ fun main(): int{
   Parser parser(filered_lex);
   auto fun_vect = parser.parse();
   auto program = Program<char>(std::move(fun_vect));
-  program.print_self(null_stream);
+  ASSERT_NO_THROW(ProgramTreePrinter<char>{null_stream}.print_program(program));
 }
 
 TEST(InterpreterTest, big_test){
