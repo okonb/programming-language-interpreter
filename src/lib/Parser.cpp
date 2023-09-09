@@ -3,17 +3,20 @@
 
 
 template<CharType T>
-const std::map<TokenType, Type> ParserBase<T>::type_map{
+constexpr light_map<TokenType, Type, 6UL> ParserBase<T>::type_map{
+    std::array<std::pair<TokenType, Type>, 6UL>{{
     {TokenType::Integer_type,   Type::Integer},
     {TokenType::Floating_type,  Type::Floating},
     {TokenType::String_type,    Type::String},
     {TokenType::File_type,      Type::File},
     {TokenType::Bool_type,      Type::Bool},
     {TokenType::Void_type,      Type::Void},
+    }}
 };
 
 template<CharType T>
-const std::map<TokenType, ExpressionType> ParserBase<T>::expression_type_map{
+constexpr light_map<TokenType, ExpressionType, 19UL> ParserBase<T>::expression_type_map{
+    std::array<std::pair<TokenType, ExpressionType>, 19UL>{{
     {TokenType::Gt,                 ExpressionType::GtExpression},
     {TokenType::Gte,                ExpressionType::GteExpression},
     {TokenType::Lt,                 ExpressionType::LtExpression},
@@ -33,10 +36,12 @@ const std::map<TokenType, ExpressionType> ParserBase<T>::expression_type_map{
     {TokenType::Floating_literal,   ExpressionType::FloatingLiteralExpression},
     {TokenType::String_literal,     ExpressionType::StringLiteralExpression},
     {TokenType::Boolean_literal,    ExpressionType::BooleanLiteralExpression},
+    }}
 };
 
 template<CharType T>
-const std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_type_map{
+constexpr light_map<ExpressionType, ExpressionType, 14UL> ParserBase<T>::match_expression_type_map{
+    std::array<std::pair<ExpressionType, ExpressionType>, 14UL>{{
     {ExpressionType::GtExpression,              ExpressionType::MatchGtExpression},
     {ExpressionType::GteExpression,             ExpressionType::MatchGteExpression},
     {ExpressionType::LtExpression,              ExpressionType::MatchLtExpression},
@@ -51,6 +56,7 @@ const std::map<ExpressionType, ExpressionType> ParserBase<T>::match_expression_t
     {ExpressionType::StrConcatExpression,       ExpressionType::MatchStrConcatExpression},
     {ExpressionType::AndExpression,             ExpressionType::MatchAndExpression},
     {ExpressionType::OrExpression,              ExpressionType::MatchOrExpression},
+    }}
 };
 
 // start_symbol = {function_definition};

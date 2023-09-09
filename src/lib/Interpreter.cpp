@@ -4,7 +4,23 @@
 template<CharType T, NumericType P = int64_t, NumericType R = int64_t>
 class Resolver{
 public:
-    const static std::map<ExpressionType, std::function<value_t<T>(P, R)>> numeric_map;
+    inline const static light_map<ExpressionType, std::function<value_t<T>(P, R)>, 10UL> numeric_map{
+        std::array<std::pair<ExpressionType, std::function<value_t<T>(P, R)>>, 10UL>{{
+        {ExpressionType::PlusExpression,            [](P l, R r) -> value_t<T> {return l + r;}},
+        {ExpressionType::MinusExpression,           [](P l, R r) -> value_t<T> {return l - r;}},
+        {ExpressionType::MultiplicationExpression,  [](P l, R r) -> value_t<T> {return l * r;}},
+        {ExpressionType::DivisionExpression,        [](P l, R r) -> value_t<T> {if(r==0){
+                                                                                    throw DivisionByZeroException<T>("", {});
+                                                                                    }
+                                                                                return l / r;}},
+        {ExpressionType::LtExpression,              [](P l, R r) -> value_t<T> {return l < r;}},
+        {ExpressionType::GtExpression,              [](P l, R r) -> value_t<T> {return l > r;}},
+        {ExpressionType::LteExpression,             [](P l, R r) -> value_t<T> {return l <= r;}},
+        {ExpressionType::GteExpression,             [](P l, R r) -> value_t<T> {return l >= r;}},
+        {ExpressionType::EqualsExpression,          [](P l, R r) -> value_t<T> {return l == r;}},
+        {ExpressionType::NotEqualsExpression,       [](P l, R r) -> value_t<T> {return l != r;}},
+        }}
+    };
     static auto resolve_numeric(ExpressionType type){
         return numeric_map.at(type);
     }
@@ -30,6 +46,7 @@ public:
     }
 };
 
+/*
 template<CharType T, NumericType P, NumericType R>
 const std::map<ExpressionType, std::function<value_t<T>(P, R)>> Resolver<T, P, R>::numeric_map {
         {ExpressionType::PlusExpression,            [](P l, R r) -> value_t<T> {return l + r;}},
@@ -46,7 +63,7 @@ const std::map<ExpressionType, std::function<value_t<T>(P, R)>> Resolver<T, P, R
         {ExpressionType::EqualsExpression,          [](P l, R r) -> value_t<T> {return l == r;}},
         {ExpressionType::NotEqualsExpression,       [](P l, R r) -> value_t<T> {return l != r;}},
 };
-
+*/
 
 template<CharType T>
 Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args) :
@@ -623,7 +640,7 @@ void Interpreter<T>::execute_block(std::vector<std::unique_ptr<IInstruction<T>>>
 
 template<CharType T>
 void Interpreter<T>::add_builtins(){
-    std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>> builtins{};
+    std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>> builtins{};  //TODO??
     builtins.insert(std::make_pair("print", get_f_d("print", Type::Void, false,
         {"text"},
         {Type::String},
@@ -682,7 +699,7 @@ void Interpreter<T>::add_builtins(){
 
 template<CharType T>
 void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
-    const static std::map<std::basic_string<T>, std::function<void(void)>> lambda_map{
+    const static std::map<std::basic_string_view<T>, std::function<void(void)>> lambda_map{ //TODO
         {"print",   [&](void) -> void {std::visit(overload{
                         [&](std::monostate) -> void {this->out_stream << "None";},  //TODO: what
                         [&](auto arg)       -> void {this->out_stream << arg;}
@@ -822,7 +839,7 @@ std::vector<value_t<T>> &Interpreter<T>::get_current_match_arguments(){
 
 template<CharType T>
 bool Interpreter<T>::is_expression_match(ExpressionType type) const{
-    return match_expression_type_map.find(type) != match_expression_type_map.end();
+    return match_expression_type_map.find(type) != match_expression_type_map.cend();
 }
 
 template<CharType T>
@@ -838,7 +855,8 @@ value_t<T> Interpreter<T>::get_current_match_argument(){
 
 
 template<CharType T>
-const std::map<ExpressionType, ExpressionType> Interpreter<T>::match_expression_type_map{
+constexpr light_map<ExpressionType, ExpressionType, 14UL> Interpreter<T>::match_expression_type_map{
+    std::array<std::pair<ExpressionType, ExpressionType>, 14UL>{{
     {ExpressionType::MatchGtExpression,               ExpressionType::GtExpression              },
     {ExpressionType::MatchGteExpression,              ExpressionType::GteExpression             },
     {ExpressionType::MatchLtExpression,               ExpressionType::LtExpression              },
@@ -853,6 +871,7 @@ const std::map<ExpressionType, ExpressionType> Interpreter<T>::match_expression_
     {ExpressionType::MatchStrConcatExpression,        ExpressionType::StrConcatExpression       },
     {ExpressionType::MatchAndExpression,              ExpressionType::AndExpression             },
     {ExpressionType::MatchOrExpression,               ExpressionType::OrExpression              },
+    }}
 };
 
 

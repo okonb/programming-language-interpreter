@@ -33,6 +33,10 @@ public:
         return result;
     }
     [[nodiscard]]
+    bool contains(const Key &key) const noexcept{
+        return find(key) != this->data.cend();
+    }
+    [[nodiscard]]
     const decltype(data)::const_iterator cbegin() const noexcept{
         return data.cbegin();
     }

@@ -9,6 +9,7 @@
 #include "Expressions.hpp"
 #include "CharType.hpp"
 #include "MatchLine.hpp"
+#include "light_map.hpp"
 #include <stdexcept>
 #include <vector>
 #include <initializer_list>
@@ -99,9 +100,9 @@ public:
     Type map_type(TokenType type) const;
     ExpressionType map_expression_type(TokenType type) const;
     ExpressionType map_to_match(ExpressionType type) const;
-    const static std::map<TokenType, Type> type_map;
-    const static std::map<TokenType, ExpressionType> expression_type_map;
-    const static std::map<ExpressionType, ExpressionType> match_expression_type_map;
+    const static light_map<TokenType, Type, 6UL> type_map;
+    const static light_map<TokenType, ExpressionType, 19UL> expression_type_map;
+    const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
     UnexpectedTokenException<T> get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location = std::source_location::current());
     SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string<T> &text, const std::source_location &location = std::source_location::current());

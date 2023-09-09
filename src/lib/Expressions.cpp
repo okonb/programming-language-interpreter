@@ -1,7 +1,8 @@
 #include "Expressions.hpp"
 
 template<>
-const std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expression_string_map{
+constexpr light_map<ExpressionType, std::basic_string_view<char>, 41UL> IExpression<char>::expression_string_map{
+    std::array<std::pair<ExpressionType, std::basic_string_view<char>>, 41UL>{{
     {ExpressionType::Expression,                    "Expression"},
     {ExpressionType::PlusExpression,                "PlusExpression"},
     {ExpressionType::MinusExpression,               "MinusExpression"},
@@ -42,6 +43,7 @@ const std::map<ExpressionType, std::basic_string<char>> IExpression<char>::expre
     {ExpressionType::MatchExpression,               "MatchExpression"},
     {ExpressionType::UnderscoreExpression,          "UnderscoreExpression"},
     {ExpressionType::IdentifierExpression,          "IdentifierExpression"},
+    }}
 };
 /*
 template<>

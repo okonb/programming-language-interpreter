@@ -9,6 +9,7 @@
 #include "ValueType.hpp"
 #include "overload.hpp"
 #include "Variable.hpp"
+#include "light_map.hpp"
 #include <stdexcept>
 #include <functional>
 #include <map>
@@ -72,7 +73,7 @@ public:
 template<CharType T>
 class SimpleTextException : public SimpleException<T>{
 public:
-    SimpleTextException(const std::basic_string<T> &text, const std::basic_string<T> &n, const Position &pos) :
+    SimpleTextException(const std::basic_string<T> &text, const std::basic_string_view<T> n, const Position &pos) :
         SimpleException<T>{text, pos}, name{n} {}
     const std::basic_string<T> &get_name() const {return name;}
 private:
@@ -82,7 +83,7 @@ private:
 template<CharType T>
 class DivisionByZeroException : public SimpleTextException<T>{
 public:
-    DivisionByZeroException(const std::basic_string<T> &operation_n, const Position &pos) :
+    DivisionByZeroException(const std::basic_string_view<T> operation_n, const Position &pos) :
         SimpleTextException<T>{"Division by zero.", operation_n, pos} {}
 };
 
@@ -201,7 +202,7 @@ private:
 template<CharType T>
 class OperatorArgumentMismatchException : public std::runtime_error{
 public:
-    OperatorArgumentMismatchException(const std::basic_string<T> &operation_n, const std::initializer_list<Type> &types_e_l, const std::initializer_list<Type> &types_e_r, const std::initializer_list<Type> &types_g, const Position &pos) :
+    OperatorArgumentMismatchException(const std::basic_string_view<T> operation_n, const std::initializer_list<Type> &types_e_l, const std::initializer_list<Type> &types_e_r, const std::initializer_list<Type> &types_g, const Position &pos) :
         std::runtime_error{"Mismatch in argument types."}, operation_name{operation_n}, expected_types_left{types_e_l}, expected_types_right{types_e_r}, gotten_types{types_g}, position{pos} {}
     const std::basic_string<T> &get_operator_name() const {return operation_name;}
     const std::vector<Type> &get_expected_type_list_left() const {return expected_types_left;}
@@ -307,7 +308,7 @@ private:
     bool is_expression_match(ExpressionType type) const;
     ExpressionType map_from_match(ExpressionType type) const;
     value_t<T> get_current_match_argument();
-    const static std::map<ExpressionType, ExpressionType> match_expression_type_map;
+    const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
     class recursion_level_guard{
     public:
