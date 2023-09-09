@@ -1,20 +1,18 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include "CharType.hpp"
 #include "ILexer.hpp"
-#include "Program.hpp"
+#include "IInstruction.hpp"
+#include "IExpression.hpp"
 #include "TypeIdentifier.hpp"
 #include "ParameterDefinition.hpp"
-#include "Instructions.hpp"
-#include "Expressions.hpp"
-#include "CharType.hpp"
 #include "MatchLine.hpp"
 #include "light_map.hpp"
 #include <stdexcept>
 #include <vector>
 #include <initializer_list>
 #include <source_location>
-#include <utility>
 
 
 template<CharType T>

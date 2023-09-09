@@ -24,12 +24,12 @@ file(GLOB proj_LIB CONFIGURE_DEPENDS "src/lib/*.h" "src/lib/*.cpp" "src/lib/*.hp
 
 add_library(tkom_proj_lib STATIC ${proj_LIB})
 
-target_include_directories(tkom_proj_lib PUBLIC include)
+target_include_directories(tkom_proj_lib PUBLIC include include/fwd)
 
 
 add_library(tkom_proj_lib_gcov STATIC EXCLUDE_FROM_ALL ${proj_LIB})
 
-target_include_directories(tkom_proj_lib_gcov PUBLIC include)
+target_include_directories(tkom_proj_lib_gcov PUBLIC include include/fwd)
 
 target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
 
@@ -60,7 +60,7 @@ add_executable(
   test/tests.cpp
 )
 
-target_include_directories(tests PUBLIC include)
+target_include_directories(tests PUBLIC include include/fwd)
 
 target_compile_options(tests PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
 

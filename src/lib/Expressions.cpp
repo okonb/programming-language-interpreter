@@ -1,5 +1,7 @@
 #include "Expressions.hpp"
 
+#include "overload.hpp"
+
 template<>
 constexpr light_map<ExpressionType, std::basic_string_view<char>, 41UL> IExpression<char>::expression_string_map{
     std::array<std::pair<ExpressionType, std::basic_string_view<char>>, 41UL>{{

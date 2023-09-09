@@ -1,22 +1,16 @@
 #ifndef INSTRUCTION_HPP
 #define INSTRUCTION_HPP
 
-
 #include "CharType.hpp"
-template<CharType T>
-class IInstruction;
 
-template<CharType T>
-class IExpression;
-
-template<CharType T>
-class IVisitor;
-
+#include "IInstruction.fwd.hpp"
+#include "IExpression.fwd.hpp"
+#include "IVisitor.fwd.hpp"
 
 #include "IInstruction.hpp"
-#include "Expressions.hpp"
-#include "TypeIdentifier.hpp"
+#include "IExpression.hpp"
 #include "IVisitor.hpp"
+#include "TypeIdentifier.hpp"
 #include <memory>
 #include <vector>
 

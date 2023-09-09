@@ -5,13 +5,10 @@
 
 #include "Instructions.fwd.hpp"
 #include "Expressions.fwd.hpp"
+#include "FunctionDefinition.fwd.hpp"
 
 #include "Instructions.hpp"
 #include "Expressions.hpp"
-
-template<CharType T>
-class FunctionDefinition;
-
 #include "FunctionDefinition.hpp"
 
 template<CharType T>

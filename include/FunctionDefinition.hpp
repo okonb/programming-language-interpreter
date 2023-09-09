@@ -3,8 +3,8 @@
 
 
 #include "CharType.hpp"
-template<CharType T = char>
-class IVisitable;
+
+#include "IVisitable.fwd.hpp"
 
 #include "IVisitable.hpp"
 #include "Instructions.hpp"

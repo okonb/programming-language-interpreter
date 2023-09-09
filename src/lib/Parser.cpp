@@ -1,5 +1,8 @@
 #include "Parser.hpp"
 
+#include "Instructions.hpp"
+#include "Expressions.hpp"
+#include "Program.hpp"
 
 
 template<CharType T>
