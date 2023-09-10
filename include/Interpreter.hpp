@@ -20,7 +20,7 @@
 template<CharType T>
 class SimpleException : public std::runtime_error{
 public:
-    SimpleException(const std::basic_string<T> &text, const Position &pos) :
+    SimpleException(const std::basic_string<T> &text, const Position &pos) noexcept :
         std::runtime_error{text}, position{pos} {}
     const Position &get_position() const {return position;}
 private:

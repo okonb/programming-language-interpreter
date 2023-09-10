@@ -5,9 +5,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "")
 set(CMAKE_CXX_EXTENSIONS OFF)
-# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,llvm-include-order,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-modernize-redundant-void-arg,-misc-no-recursion")
-set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror -flto=auto )
+#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,llvm-include-order,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-modernize-redundant-void-arg,-misc-no-recursion,-google-readability-todo,-llvm-include-order")
+set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror )
 #  -Wconversion
+
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 include(FetchContent)
 FetchContent_Declare(

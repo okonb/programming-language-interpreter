@@ -12,6 +12,8 @@ constexpr light_map<Type, std::basic_string_view<char>, 6UL> TypeIdentifier<char
     }}
 };
 
+template class TypeIdentifier<char>;
+
 /*
 template<>
 const std::map<Type, std::basic_string<wchar_t>> TypeIdentifier<wchar_t>::type_map{

@@ -2,11 +2,6 @@
 #define INSTRUCTION_HPP
 
 #include "CharType.hpp"
-
-#include "IInstruction.fwd.hpp"
-#include "IExpression.fwd.hpp"
-#include "IVisitor.fwd.hpp"
-
 #include "IInstruction.hpp"
 #include "IExpression.hpp"
 #include "IVisitor.hpp"

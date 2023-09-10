@@ -1,6 +1,11 @@
 #include "Interpreter.hpp"
 
+#include "Instructions.hpp"
+#include "Expressions.hpp"
 
+// intentional conversion warning suppression to facilitate expected behaviour
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 template<CharType T, NumericType P = int64_t, NumericType R = int64_t>
 class Resolver{
 public:
@@ -45,6 +50,8 @@ public:
     throw OperatorArgumentMismatchException<T>(IExpression<T>::get_string_repr(type), {}, {}, {Type::String, Type::String}, {});
     }
 };
+
+#pragma GCC diagnostic pop
 
 /*
 template<CharType T, NumericType P, NumericType R>
@@ -748,8 +755,9 @@ void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
         }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
         {"arguments_number",    [&](void) -> void {current_value = int64_t(program_arguments.size()); return_flag = true;}},
         {"argument",    [&](void) -> void {std::visit(overload{
-                            [&](int64_t index)  -> void {if(index >= int64_t(program_arguments.size())){throw std::runtime_error{"Index out of bounds."};}
-                                                        current_value = program_arguments[index]; },
+                            [&](int64_t index)  -> void {size_t uindex = static_cast<size_t>(index);
+                                                        if(uindex >= program_arguments.size()){throw std::runtime_error{"Index out of bounds."};}
+                                                        current_value = program_arguments[uindex]; },
                             [&](auto)           -> void {current_value = {};}
         }, get_variable_from_current_context("num")->get_value()); return_flag = true;}},
     };

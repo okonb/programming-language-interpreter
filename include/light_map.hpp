@@ -28,7 +28,7 @@ public:
         return result->second;
     }
     [[nodiscard]]
-    const decltype(data)::const_iterator find(const Key &key) const noexcept{
+    const typename decltype(data)::const_iterator find(const Key &key) const noexcept{
         const auto result = std::find_if(this->data.cbegin(), this->data.cend(), [&key](const auto &entry){return entry.first == key;});
         return result;
     }
@@ -37,11 +37,11 @@ public:
         return find(key) != this->data.cend();
     }
     [[nodiscard]]
-    const decltype(data)::const_iterator cbegin() const noexcept{
+    const typename decltype(data)::const_iterator cbegin() const noexcept{
         return data.cbegin();
     }
     [[nodiscard]]
-    const decltype(data)::const_iterator cend() const noexcept{
+    const typename decltype(data)::const_iterator cend() const noexcept{
         return data.cend();
     }
 };

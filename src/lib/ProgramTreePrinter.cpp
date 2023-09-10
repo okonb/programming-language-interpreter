@@ -1,7 +1,9 @@
 #include "ProgramTreePrinter.hpp"
 
-#include <variant>
 #include "overload.hpp"
+#include "Instructions.hpp"
+#include "Expressions.hpp"
+#include <variant>
 
 template <CharType T>
 void ProgramTreePrinter<T>::print_program(const Program<T> &program){

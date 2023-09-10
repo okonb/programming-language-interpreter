@@ -4,7 +4,7 @@
 #include "TypeIdentifier.hpp"
 #include "CharType.hpp"
 #include <string>
-#include <sstream>
+#include <memory>
 
 template<CharType T = char>
 class ParameterDefinition{

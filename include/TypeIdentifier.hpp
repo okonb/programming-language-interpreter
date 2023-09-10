@@ -2,7 +2,6 @@
 #define TYPE_IDENTIFIER_HPP
 
 #include <stdexcept>
-#include <map>
 #include <string>
 #include <sstream>
 #include "CharType.hpp"
@@ -45,5 +44,8 @@ private:
     bool is_const;
     const static light_map<Type, std::basic_string_view<T>, 6UL> type_map;
 };
+template<> const light_map<Type, std::basic_string_view<char>, 6UL> TypeIdentifier<char>::type_map;
+
+extern template class TypeIdentifier<char>;
 
 #endif // TYPE_IDENTIFIER_HPP

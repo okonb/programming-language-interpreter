@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <iostream>
+#include "Instructions.hpp"
+#include "Expressions.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "CommentFilterLexer.hpp"
@@ -1065,7 +1067,7 @@ TEST(ParserTest, try_parse_var_def_assign_or_funcall1){
   ASSERT_EQ(expr->get_name(), "var");
   ASSERT_EQ(expr->get_type()->get_type(), Type::Integer);
   ASSERT_EQ(expr->get_type()->get_is_const(), true);
-  ASSERT_NO_THROW(dynamic_cast<TwoArgExpression<char>*>(expr->get_expression().get()));
+  ASSERT_NO_THROW([[maybe_unused]] const auto* _ = dynamic_cast<TwoArgExpression<char>*>(expr->get_expression().get()));
 }
 
 TEST(ParserTest, try_parse_var_def_assign_or_funcall2){
@@ -1078,7 +1080,7 @@ TEST(ParserTest, try_parse_var_def_assign_or_funcall2){
   ASSERT_NO_THROW( expr = dynamic_cast<AssignmentInstruction<char>*>(parser.try_parse_var_def_assign_or_funcall().release()));
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_name(), "var");
-  ASSERT_NO_THROW(dynamic_cast<LiteralExpression<char>*>(expr->get_expression().get()));
+  ASSERT_NO_THROW([[maybe_unused]] const auto* _ = dynamic_cast<LiteralExpression<char>*>(expr->get_expression().get()));
 }
 
 
@@ -1114,7 +1116,7 @@ TEST(ParserTest, try_parse_while_block_fail){
   s << "while(condition){funcall();";
   Lexer lex(s);
   ParserBase parser(lex);
-  ASSERT_THROW(dynamic_cast<WhileInstruction<char>*>(parser.try_parse_while_block().release()), UnexpectedTokenException<char>);
+  ASSERT_THROW([[maybe_unused]] const auto* _ = dynamic_cast<WhileInstruction<char>*>(parser.try_parse_while_block().release()), UnexpectedTokenException<char>);
 }
 
 TEST(ParserTest, try_parse_if_block1){
@@ -1728,7 +1730,7 @@ fun main(): int{
   Lexer lex(s);
   CommentFilterLexer<char> filered_lex{lex};
   Parser parser(filered_lex);
-  auto program = std::make_unique<Program<char>>(std::move(parser.parse()));
+  auto program = std::make_unique<Program<char>>(parser.parse());
   Interpreter<char> inter{std::move(program), null_stream, {"./Makefile"}};
   ASSERT_NO_THROW(inter.run());
 

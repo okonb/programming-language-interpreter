@@ -47,6 +47,7 @@ constexpr light_map<ExpressionType, std::basic_string_view<char>, 41UL> IExpress
     {ExpressionType::IdentifierExpression,          "IdentifierExpression"},
     }}
 };
+template class IExpression<char>;
 /*
 template<>
 const std::map<ExpressionType, std::basic_string<wchar_t>> IExpression<wchar_t>::expression_string_map{

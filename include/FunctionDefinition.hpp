@@ -3,9 +3,6 @@
 
 
 #include "CharType.hpp"
-
-#include "IVisitable.fwd.hpp"
-
 #include "IVisitable.hpp"
 #include "Instructions.hpp"
 #include "TypeIdentifier.hpp"
