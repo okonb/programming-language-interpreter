@@ -177,6 +177,7 @@ constexpr light_map<T, T, 10UL> Lexer<T>::escapes{
     }}
 };
 
+//TODO check all suspicious static_cast s
 
 template<CharType T>
 Token<T> Lexer<T>::get_next_token(){

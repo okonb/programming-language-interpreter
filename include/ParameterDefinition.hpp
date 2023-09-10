@@ -9,7 +9,7 @@
 template<CharType T = char>
 class ParameterDefinition{
 public:
-    explicit ParameterDefinition(std::unique_ptr<TypeIdentifier<T>> t, const std::basic_string<T> &n) :
+    ParameterDefinition(std::unique_ptr<TypeIdentifier<T>> t, const std::basic_string<T> &n) :
         type{std::move(t)}, name{n} {}
     
     const std::unique_ptr<TypeIdentifier<T>> &get_type() const {return type;}

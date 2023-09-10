@@ -873,7 +873,7 @@ TEST(ParserTest, is_current_token_relation_operator){
   Lexer lex(s);
   ParserBase parser(lex);
   ASSERT_EQ(parser.is_current_token_relation_operator(), true);
-  parser.get_next_token();
+  parser.advance_token();
   ASSERT_EQ(parser.is_current_token_relation_operator(), false);
 }
 
@@ -884,7 +884,7 @@ TEST(ParserTest, is_current_token_a_type){
   Lexer lex(s);
   ParserBase parser(lex);
   ASSERT_EQ(parser.is_current_token_a_type(), true);
-  parser.get_next_token();
+  parser.advance_token();
   ASSERT_EQ(parser.is_current_token_a_type(), false);
 }
 
