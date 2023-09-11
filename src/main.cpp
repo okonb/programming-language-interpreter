@@ -110,7 +110,7 @@ int main(int argc, char** argv){
         for(const auto &type : e.get_expected_type_list_left()){
             std::cerr << TypeIdentifier<char>::get_type_text(type) << ", ";
         }
-        std::cerr << "\nleft expected types:\n";
+        std::cerr << "\nright expected types:\n";
         for(const auto &type : e.get_expected_type_list_right()){
             std::cerr << TypeIdentifier<char>::get_type_text(type) << ", ";
         }

@@ -26,8 +26,17 @@ public:
         {ExpressionType::NotEqualsExpression,       [](P l, R r) -> value_t<T> {return l != r;}},
         }}
     };
-    static auto resolve_numeric(ExpressionType type){
+    inline const static light_map<ExpressionType, std::function<value_t<T>(bool, bool)>, 2UL> bool_map{
+        std::array<std::pair<ExpressionType, std::function<value_t<T>(const bool, const bool)>>, 2UL>{{
+        {ExpressionType::EqualsExpression,          [](const bool l, const bool r) -> value_t<T> {return l == r;}},
+        {ExpressionType::NotEqualsExpression,       [](const bool l, const bool r) -> value_t<T> {return l != r;}},
+        }}
+    };
+    static const auto &resolve_numeric(ExpressionType type){
         return numeric_map.at(type);
+    }
+    static const auto &resolve_bool(ExpressionType type){
+        return bool_map.at(type);
     }
     static std::function<value_t<T>(const std::basic_string<T>&, const std::basic_string<T>&)> resolve_string(ExpressionType type){
         if(type == ExpressionType::StrConcatExpression){
@@ -323,6 +332,7 @@ void Interpreter<T>::visit(TwoArgExpression<T> &expr){
     try{
         result = std::visit(overload{
             [&expr_type](NumericType auto l, NumericType auto r)                        {return Resolver<T, decltype(l), decltype(r)>::resolve_numeric(expr_type)(l, r);},
+            [&expr_type](const bool l, const bool r)                                    {return Resolver<T>::resolve_bool(expr_type)(l, r);},
             [&expr_type](const std::basic_string<T> &l, const std::basic_string<T> &r)  {return Resolver<T>::resolve_string(expr_type)(l, r);},
             [](auto, auto)                                                              {return value_t<T>{};},
             },
