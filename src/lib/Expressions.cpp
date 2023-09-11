@@ -36,6 +36,7 @@ constexpr light_map<ExpressionType, std::basic_string_view<char>, 41UL> IExpress
     {ExpressionType::MatchGteExpression,            "MatchGteExpression"},
     {ExpressionType::MatchEqualsExpression,         "MatchEqualsExpression"},
     {ExpressionType::MatchNotEqualsExpression,      "MatchNotEqualsExpression"},
+    {ExpressionType::MatchNotExpression,            "MatchNotExpression"},
     {ExpressionType::MatchNegateNumberExpression,   "MatchNegateNumberExpressio"},
     {ExpressionType::IntegerLiteralExpression,      "IntegerLiteralExpression"},
     {ExpressionType::FloatingLiteralExpression,     "FloatingLiteralExpression"},

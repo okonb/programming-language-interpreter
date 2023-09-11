@@ -113,7 +113,7 @@ private:
 
     const static light_map<TokenType, Type, 6UL> type_map;
     const static light_map<TokenType, ExpressionType, 19UL> expression_type_map;
-    const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
+    const static light_map<ExpressionType, ExpressionType, 15UL> match_expression_type_map;
 };
 
 

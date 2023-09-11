@@ -39,6 +39,7 @@ enum class ExpressionType{
     MatchGteExpression,
     MatchEqualsExpression,
     MatchNotEqualsExpression,
+    MatchNotExpression,
     MatchNegateNumberExpression,
     IntegerLiteralExpression,
     FloatingLiteralExpression,

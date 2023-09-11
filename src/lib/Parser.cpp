@@ -3,6 +3,7 @@
 #include "Instructions.hpp"
 #include "Expressions.hpp"
 #include "Program.hpp"
+#include <optional>
 
 
 template<CharType T>
@@ -43,14 +44,15 @@ constexpr light_map<TokenType, ExpressionType, 19UL> ParserBase<T>::expression_t
 };
 
 template<CharType T>
-constexpr light_map<ExpressionType, ExpressionType, 14UL> ParserBase<T>::match_expression_type_map{
-    std::array<std::pair<ExpressionType, ExpressionType>, 14UL>{{
+constexpr light_map<ExpressionType, ExpressionType, 15UL> ParserBase<T>::match_expression_type_map{
+    std::array<std::pair<ExpressionType, ExpressionType>, 15UL>{{
     {ExpressionType::GtExpression,              ExpressionType::MatchGtExpression},
     {ExpressionType::GteExpression,             ExpressionType::MatchGteExpression},
     {ExpressionType::LtExpression,              ExpressionType::MatchLtExpression},
     {ExpressionType::LteExpression,             ExpressionType::MatchLteExpression},
     {ExpressionType::EqualsExpression,          ExpressionType::MatchEqualsExpression},
     {ExpressionType::NotEqualsExpression,       ExpressionType::MatchNotEqualsExpression},
+    {ExpressionType::NotExpression,             ExpressionType::MatchNotExpression},
     {ExpressionType::PlusExpression,            ExpressionType::MatchPlusExpression},
     {ExpressionType::MinusExpression,           ExpressionType::MatchMinusExpression},
     {ExpressionType::MultiplicationExpression,  ExpressionType::MatchMultiplicationExpression},
@@ -385,15 +387,11 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_logic_factor(){
     return relation_l;
 }
 
-// relation = [Not], math_expression, [relation_operator, math_expression];
+// relation = math_expression, [relation_operator, math_expression];
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
     const auto start_position = get_current_position();
-    const bool negate = check_and_advance(TokenType::Not);
     auto math_expression_l = try_parse_math_expression();
-    if(!math_expression_l && negate){
-        throw get_syntax_error_exception("math_expression");
-    }
     if(!math_expression_l){
         return nullptr;
     }
@@ -404,10 +402,6 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_relation(){
         expect_not_null(math_expression_r, "math_expression");
 
         math_expression_l = std::make_unique<TwoArgExpression<T>>(type, std::move(math_expression_l), std::move(math_expression_r), start_position);
-    }
-    //TODO maybe swap these ^ \|/ two ifs so that negation operator sticks to the expression immediately right to it
-    if(negate){
-        math_expression_l = std::make_unique<SingleArgExpression<T>>(ExpressionType::NotExpression, std::move(math_expression_l), start_position);
     }
     return math_expression_l;
 }
@@ -452,14 +446,20 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
     return term_l;
 }
 
-// term = [Minus], (literal
-//                  | identifier_or_funcall
-//                  | ( Opening_parenth, expression, Closing_parenth));
-
+// term = [Not | Minus], (literal
+//                      | identifier_or_funcall
+//                      | ( Opening_parenth, expression, Closing_parenth));
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
     const auto start_position = get_current_position();
-    const bool negative = check_and_advance(TokenType::Minus);
+    std::optional<ExpressionType> unary_expr_type{};
+    if(check_and_advance(TokenType::Not)){
+        unary_expr_type = ExpressionType::NotExpression;
+    }
+    else if(check_and_advance(TokenType::Minus)){
+        unary_expr_type = ExpressionType::NegateNumberExpression;
+    }
+
     std::unique_ptr<IExpression<T>> term{nullptr};
     
     term = try_parse_literal();
@@ -473,9 +473,9 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
         }
     }
     
-    if(negative){
+    if(unary_expr_type){
         if(term){
-            term = std::make_unique<SingleArgExpression<T>>(ExpressionType::NegateNumberExpression, std::move(term), start_position);
+            term = std::make_unique<SingleArgExpression<T>>(*unary_expr_type, std::move(term), start_position);
         }
         else{
             throw get_syntax_error_exception("term");
@@ -573,14 +573,21 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
     return term_l;
 }
 
-// match_term = [Minus], (literal
-//                  | identifier_or_funcall
-//                  | ( Opening_parenth, match_expression, Closing_parenth));
+// match_term = [Not | Minus], (literal
+//                            | identifier_or_funcall
+//                            | (Opening_parenth, match_expression, Closing_parenth));
 
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
     const auto start_position = get_current_position();
-    const bool negative = check_and_advance(TokenType::Minus);
+    std::optional<ExpressionType> unary_expr_type{};
+    if(check_and_advance(TokenType::Not)){
+        unary_expr_type = ExpressionType::MatchNotExpression;
+    }
+    else if(check_and_advance(TokenType::Minus)){
+        unary_expr_type = ExpressionType::MatchNegateNumberExpression;
+    }
+    
     std::unique_ptr<IExpression<T>> term = nullptr;
     
     term = try_parse_literal();
@@ -594,9 +601,9 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
         }
     }
 
-    if(negative){
+    if(unary_expr_type){
         if(term){
-            term = std::make_unique<SingleArgExpression<T>>(ExpressionType::MatchNegateNumberExpression, std::move(term), start_position);
+            term = std::make_unique<SingleArgExpression<T>>(*unary_expr_type, std::move(term), start_position);
         }
         else{
             throw get_syntax_error_exception("match_term");

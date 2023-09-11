@@ -1567,14 +1567,14 @@ fun main(): int{
   std::stringstream null_stream{};
   null_stream.setstate(std::ios_base::badbit);
   Lexer lex(s);
-  CommentFilterLexer<char> filered_lex{lex};
-  Parser parser(filered_lex);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
   auto fun_vect = parser.parse();
   auto program = Program<char>(std::move(fun_vect));
   ASSERT_NO_THROW(ProgramTreePrinter<char>{null_stream}.print_program(program));
 }
 
-TEST(InterpreterTest, negation_sticking_test){  //TODO put in parser suite??
+TEST(InterpreterTest, negation_sticking_test1){
   std::stringstream s;
   s.unsetf(std::ios::skipws);
   s << 
@@ -1590,12 +1590,37 @@ fun main(): int{
   std::stringstream null_stream{};
   null_stream.setstate(std::ios_base::badbit);
   Lexer lex(s);
-  CommentFilterLexer<char> filered_lex{lex};
-  Parser parser(filered_lex);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
   auto program = std::make_unique<Program<char>>(parser.parse());
   Interpreter<char> inter{std::move(program), null_stream, {}};
   ASSERT_EQ(inter.run(), 0L);
 }
+
+
+TEST(InterpreterTest, negation_sticking_test2){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << 
+  R"(
+fun main(): int{
+  if(not 3 > 2){
+    return 0;
+  }
+  return 1;
+}
+    )";
+
+  std::stringstream null_stream{};
+  null_stream.setstate(std::ios_base::badbit);
+  Lexer lex(s);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
+  auto program = std::make_unique<Program<char>>(parser.parse());
+  Interpreter<char> inter{std::move(program), null_stream, {}};
+  ASSERT_THROW(inter.run(), OperatorArgumentMismatchException<char>);
+}
+
 
 TEST(InterpreterTest, big_test){
   std::stringstream s;
@@ -1751,8 +1776,8 @@ fun main(): int{
   std::stringstream null_stream{};
   null_stream.setstate(std::ios_base::badbit);
   Lexer lex(s);
-  CommentFilterLexer<char> filered_lex{lex};
-  Parser parser(filered_lex);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
   auto program = std::make_unique<Program<char>>(parser.parse());
   Interpreter<char> inter{std::move(program), null_stream, {"./Makefile"}};
   ASSERT_NO_THROW(inter.run());

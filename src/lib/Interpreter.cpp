@@ -234,7 +234,7 @@ void Interpreter<T>::visit(SingleArgExpression<T> &expr){
         return;
     }
 
-    if(expr_type == ExpressionType::NotExpression){
+    if(expr_type == ExpressionType::NotExpression || expr_type == ExpressionType::MatchNotExpression){
         const value_t<T> val = std::visit(overload{
             [](bool v)  -> value_t<T> { return !v; },
             [](auto)    -> value_t<T> { return {}; },
