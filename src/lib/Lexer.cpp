@@ -177,6 +177,24 @@ constexpr light_map<T, T, 10UL> Lexer<T>::escapes{
     }}
 };
 
+template<CharType T>
+Lexer<T>::Lexer(std::basic_istream<T> &in_stream) :
+    current_position({1, 0}), start_position({1, 1}), input_stream(in_stream), newline_sequence(std::nullopt) { 
+        
+    advance_character();
+    input_stream.unsetf(std::ios::skipws);
+}
+
+template<CharType T>
+Lexer<T>::~Lexer() {
+    input_stream.setf(std::ios::skipws);
+}
+
+template<CharType T>
+const std::basic_string_view<T> Lexer<T>::get_token_text(const TokenType t) {
+    return token_to_text.at(t);
+}
+
 //TODO check all suspicious static_cast s
 
 template<CharType T>

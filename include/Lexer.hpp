@@ -24,16 +24,11 @@ private:
 template<CharType T = char>
 class Lexer : public ILexer<T> {
 public:
-    explicit Lexer(std::basic_istream<T> &in_stream) :
-        current_position({1, 0}), start_position({1, 1}), input_stream(in_stream), newline_sequence(std::nullopt) { 
-        
-        advance_character();
-        input_stream.unsetf(std::ios::skipws);
-    };
-    ~Lexer() { input_stream.setf(std::ios::skipws); }
+    explicit Lexer(std::basic_istream<T> &in_stream);
+    ~Lexer() override;
 
     Token<T> get_next_token() override;
-    static const std::basic_string_view<T> get_token_text(const TokenType t) {return token_to_text.at(t);}
+    static const std::basic_string_view<T> get_token_text(const TokenType t);
 
 private:
     std::optional<Token<T>> try_build_etx();
