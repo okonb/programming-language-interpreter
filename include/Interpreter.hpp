@@ -20,7 +20,7 @@
 template<CharType T>
 class SimpleException : public std::runtime_error{
 public:
-    SimpleException(const std::basic_string<T> &text, const Position &pos) noexcept :
+    SimpleException(const std::basic_string<T> &text, const Position &pos) :
         std::runtime_error{text}, position{pos} {}
     const Position &get_position() const {return position;}
 private:
@@ -90,70 +90,70 @@ public:
 template<CharType T>
 class VoidVariableException : public SimpleTextException<T>{
 public:
-    VoidVariableException(const std::basic_string<T> &var_n, const Position &pos) :
+    VoidVariableException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Variable type set to void.", var_n, pos} {}
 };
 
 template<CharType T>
 class VariableRedefinitionException : public SimpleTextException<T>{
 public:
-    VariableRedefinitionException(const std::basic_string<T> &var_n, const Position &pos) :
+    VariableRedefinitionException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Variable redefinition.", var_n, pos} {}
 };
 
 template<CharType T>
 class FunctionRedefinitionException : public SimpleTextException<T>{
 public:
-    FunctionRedefinitionException(const std::basic_string<T> &fun_n, const Position &pos) :
+    FunctionRedefinitionException(const std::basic_string_view<T> fun_n, const Position &pos) :
         SimpleTextException<T>{"Function redefinition.", fun_n, pos} {}
 };
 
 template<CharType T>
 class VariableNotDeclaredException : public SimpleTextException<T>{
 public:
-    VariableNotDeclaredException(const std::basic_string<T> &var_n, const Position &pos) :
+    VariableNotDeclaredException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Variable was not declared in this scope.", var_n, pos} {}
 };
 
 template<CharType T>
 class FunctionNotDeclaredException : public SimpleTextException<T>{
 public:
-    FunctionNotDeclaredException(const std::basic_string<T> &var_n, const Position &pos) :
+    FunctionNotDeclaredException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Function was not declared.", var_n, pos} {}
 };
 
 template<CharType T>
 class ConstVariableAssignmentException : public SimpleTextException<T>{
 public:
-    ConstVariableAssignmentException(const std::basic_string<T> &var_n, const Position &pos) :
+    ConstVariableAssignmentException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Trying to assign to const variable.", var_n, pos} {}
 };
 
 template<CharType T>
 class NonBooleanConditionException : public SimpleTextException<T>{
 public:
-    NonBooleanConditionException(const std::basic_string<T> &var_n, const Position &pos) :
+    NonBooleanConditionException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Condition expression does not evaluate to boolean.", var_n, pos} {}
 };
 
 template<CharType T>
 class NoConditionException : public SimpleTextException<T>{
 public:
-    NoConditionException(const std::basic_string<T> &var_n, const Position &pos) :
+    NoConditionException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Condition expression not declared.", var_n, pos} {}
 };
 
 template<CharType T>
 class RecursionLimitException : public SimpleTextException<T>{
 public:
-    RecursionLimitException(const std::size_t level, const std::basic_string<T> f_name, const Position &pos) :
+    RecursionLimitException(const std::size_t level, const std::basic_string<T> &f_name, const Position &pos) :
         SimpleTextException<T>{"Recursion limit hit.", "Level: " + std::to_string(level) + ", calling function " + f_name + ".", pos} {}
 };
 
 template<CharType T>
 class VariableAssignmentTypeMismatchException : public std::runtime_error{
 public:
-    VariableAssignmentTypeMismatchException(const std::basic_string<T> &var_n, const TypeIdentifier<T> &var_t, const Type val_t, const Position &pos) :
+    VariableAssignmentTypeMismatchException(const std::basic_string_view<T> var_n, const TypeIdentifier<T> &var_t, const Type val_t, const Position &pos) :
         std::runtime_error{"Trying to assign to variable of different type."}, variable_name{var_n}, variable_type{var_t}, value_type{val_t}, position{pos} {}
     const std::basic_string<T> &get_variable_name() const {return variable_name;}
     const TypeIdentifier<T> &get_variable_type(){return variable_type;}
@@ -169,7 +169,7 @@ private:
 template<CharType T>
 class ReturnValueTypeMismatchException : public std::runtime_error{
 public:
-    ReturnValueTypeMismatchException(const std::basic_string<T> &func_name, const TypeIdentifier<T> &ret_t, const Type val_t, const Position &pos) :
+    ReturnValueTypeMismatchException(const std::basic_string_view<T> func_name, const TypeIdentifier<T> &ret_t, const Type val_t, const Position &pos) :
         std::runtime_error{"Trying to return variable of type different to declared."}, function_name{func_name}, return_type{ret_t}, value_type{val_t}, position{pos} {}
     const std::basic_string<T> &get_function_name() const {return function_name;}
     const TypeIdentifier<T> &get_return_type(){return return_type;}
@@ -185,7 +185,7 @@ private:
 template<CharType T>
 class FunctionArgumentMismatchException : public std::runtime_error{
 public:
-    FunctionArgumentMismatchException(const std::basic_string<T> &operation_n, const std::vector<TypeIdentifier<T>> &types_e, const std::vector<TypeIdentifier<T>> &types_g, size_t no, const Position &pos) :
+    FunctionArgumentMismatchException(const std::basic_string_view<T> operation_n, const std::vector<TypeIdentifier<T>> &types_e, const std::vector<TypeIdentifier<T>> &types_g, size_t no, const Position &pos) :
         std::runtime_error{"Mismatch in argument types."}, operation_name{operation_n}, expected_types{types_e}, gotten_types{types_g}, number{no}, position{pos} {}
     const std::basic_string<T> &get_function_name() const {return operation_name;}
     const std::vector<TypeIdentifier<T>> &get_expected_type_list() const {return expected_types;}
@@ -267,7 +267,7 @@ private:
     std::map<std::basic_string<T>, std::basic_fstream<T>> open_files;
     size_t current_recursion_level;
     const size_t MAX_RECURSION_LEVEL;
-    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, Type ret_type, bool ret_const,
+    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, Type ret_type, bool ret_const,    //TODO change to string_view?
                                                 const std::initializer_list<std::basic_string<T>> &p_names,
                                                 const std::initializer_list<Type> &p_types,
                                                 const std::initializer_list<bool> &p_consts);

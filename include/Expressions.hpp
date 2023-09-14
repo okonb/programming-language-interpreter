@@ -54,10 +54,10 @@ private:
 template<CharType T>
 class IdentifierExpression : public IExpression<T> {
 public:
-    IdentifierExpression(const std::basic_string<T> &v, const Position &pos) :
+    IdentifierExpression(const std::basic_string_view<T> v, const Position &pos) :
         IExpression<T>{ExpressionType::IdentifierExpression, pos}, value{v} {}
     ~IdentifierExpression() override = default;
-    std::basic_string<T> get_value() const {return value;}
+    const std::basic_string<T> &get_value() const {return value;}
     
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
@@ -67,7 +67,7 @@ private:
 template<CharType T = char>
 class FunctionCall : public IExpression<T>{
 public:
-    FunctionCall(const std::basic_string<T> &n, std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> args, const Position &pos) :
+    FunctionCall(const std::basic_string_view<T> n, std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> args, const Position &pos) :
         IExpression<T>{ExpressionType::FunctionCallExpression, pos}, name{n}, arguments{std::move(args)} {}
     ~FunctionCall() override = default;
     

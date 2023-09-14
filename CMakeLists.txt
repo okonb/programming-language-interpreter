@@ -5,9 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "")
 set(CMAKE_CXX_EXTENSIONS OFF)
-#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,llvm-include-order,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-modernize-redundant-void-arg,-misc-no-recursion,-google-readability-todo,-llvm-include-order")
-set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror )
-#  -Wconversion
+#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-modernize-redundant-void-arg,-misc-no-recursion,-google-readability-todo")
+set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror -Wconversion)
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
@@ -33,7 +32,7 @@ add_library(tkom_proj_lib_gcov STATIC EXCLUDE_FROM_ALL ${proj_LIB})
 
 target_include_directories(tkom_proj_lib_gcov PUBLIC include include/fwd)
 
-target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
+target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -gdwarf-4 -O0)
 
 
 add_executable(main src/main.cpp)
@@ -64,7 +63,7 @@ add_executable(
 
 target_include_directories(tests PUBLIC include include/fwd)
 
-target_compile_options(tests PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
+target_compile_options(tests PUBLIC ${GENERAL_FLAGS} --coverage -g3 -gdwarf-4 -O0)
 
 target_link_libraries(
   tests

@@ -135,7 +135,7 @@ void Interpreter<T>::visit(AssignmentInstruction<T> &instr){
     auto var = get_variable_from_current_context(name);
     current_variable = var;
     if(!var){
-        throw VariableNotDeclaredException(name, instr.get_position());
+        throw VariableNotDeclaredException<T>(name, instr.get_position());
     }
     if(var->is_const()){
         throw ConstVariableAssignmentException<T>(name, instr.get_position());
@@ -144,7 +144,7 @@ void Interpreter<T>::visit(AssignmentInstruction<T> &instr){
     instr.get_expression()->accept(*this);
 
     if(!is_current_value_of_type(var->get_type().get_type())){
-        throw VariableAssignmentTypeMismatchException(name, var->get_type(), get_current_value_type(), instr.get_position());
+        throw VariableAssignmentTypeMismatchException<T>(name, var->get_type(), get_current_value_type(), instr.get_position());
     }
     var->set_value(current_value);
 }
@@ -742,7 +742,7 @@ void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
                                 [&](auto)           -> void {current_value = {};}
         }, get_variable_from_current_context("int_v")->get_value()); return_flag = true;}},
         {"open_file",   [&](void) -> void {std::visit(overload{
-                            [&](std::basic_string<T> arg)   -> void {   if(!open_files.contains(arg)){
+                            [&](const std::basic_string<T> &arg)   -> void {   if(!open_files.contains(arg)){
                                                                             open_files.insert(std::make_pair(arg, std::fstream{arg}));
                                                                         }
                                                                         current_value = arg;
@@ -750,22 +750,22 @@ void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
                             [&](auto)                       -> void {current_value = {};}  
         }, get_variable_from_current_context("name")->get_value()); return_flag = true;}},
         {"bad_file",    [&](void) -> void {std::visit(overload{
-                            [&](std::basic_string<T> arg)   -> void {current_value = !bool(open_files.at(arg)); },
+                            [&](const std::basic_string<T> &arg)   -> void {current_value = !bool(open_files.at(arg)); },
                             [&](auto)                       -> void {current_value = {};}
         }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
         {"read_line",   [&](void) -> void {std::visit(overload{
-                            [&](std::basic_string<T> arg)   -> void {std::basic_string<T> tmp{};
+                            [&](const std::basic_string<T> &arg)   -> void {std::basic_string<T> tmp{};
                                                                     current_value = std::getline(open_files.at(arg), tmp) ? tmp : "\x03";},
                             [&](auto)                       -> void {current_value = {};}
         }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
         {"close_file",  [&](void) -> void {std::visit(overload{
-                            [&](std::basic_string<T> arg)   -> void {open_files.erase(arg);
+                            [&](const std::basic_string<T> &arg)   -> void {open_files.erase(arg);
                                                                     current_value = true; },
                             [&](auto)                       -> void {current_value = {};}
         }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
         {"arguments_number",    [&](void) -> void {current_value = int64_t(program_arguments.size()); return_flag = true;}},
         {"argument",    [&](void) -> void {std::visit(overload{
-                            [&](int64_t index)  -> void {size_t uindex = static_cast<size_t>(index);
+                            [&](int64_t index)  -> void {const auto uindex = static_cast<size_t>(index);
                                                         if(uindex >= program_arguments.size()){throw std::runtime_error{"Index out of bounds."};}
                                                         current_value = program_arguments[uindex]; },
                             [&](auto)           -> void {current_value = {};}
@@ -782,7 +782,7 @@ void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
 
 template<CharType T>
 std::unique_ptr<FunctionDefinition<T>> Interpreter<T>::get_f_d( const std::basic_string<T> &name, Type ret_type, bool ret_const,
-                                                const std::initializer_list<std::basic_string<T>> &p_names,
+                                                const std::initializer_list<std::basic_string<T>> &p_names, //TODO memory copying...
                                                 const std::initializer_list<Type> &p_types,
                                                 const std::initializer_list<bool> &p_consts){
 
@@ -803,10 +803,10 @@ void Interpreter<T>::add_variable(const std::basic_string<T> &name, const TypeId
 template<CharType T>
 Type Interpreter<T>::get_value_type(const value_t<T> &v){
     return std::visit(overload{
-        [](bool){return Type::Bool;},
-        [](int64_t){return Type::Integer;},
-        [](double){return Type::Floating;},
-        [](std::basic_string<T>){return Type::String;},
+        [](const bool){return Type::Bool;},
+        [](const int64_t){return Type::Integer;},
+        [](const double){return Type::Floating;},
+        [](const std::basic_string<T>&){return Type::String;},
         [](std::monostate){return Type::Void;},
     }, v);
 }

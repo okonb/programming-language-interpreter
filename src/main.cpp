@@ -6,6 +6,8 @@
 #include "ProgramTreePrinter.hpp"
 #include <iostream>
 #include <sstream>
+#include <iterator>
+#include <span>
 
 constexpr bool PRINT_TREE_BEFORE_EXECUTION = true;
 
@@ -15,14 +17,16 @@ using namespace std::literals;
 
 int main(int argc, char** argv){
 
-    auto argc_u = static_cast<std::size_t>(argc);
+    const auto main_args_size = static_cast<std::size_t>(argc);
+    const auto main_args = std::span{argv, main_args_size};
 
-    if(argc_u < 2){
-        std::cout << "Please provide program filename as the argument.\n";
+
+    if(main_args_size < 2){
+        std::cerr << "Please provide program filename as the argument.\n";
         return 1;
     }
     
-    std::ifstream infile{argv[1]};
+    std::ifstream infile{main_args[1]};
     infile.unsetf(std::ios::skipws);
 
     std::vector<std::string> arguments{};
@@ -30,14 +34,14 @@ int main(int argc, char** argv){
     std::size_t arg_index = 2;
 
     //skip additional program arguments
-    while(arg_index < argc_u and "--"s != argv[arg_index]){
+    while(arg_index < main_args_size and "--"s != main_args[arg_index]){
         ++arg_index;
     }
     //skip --
     ++arg_index;
 
-    while(arg_index < argc_u){
-        arguments.emplace_back(argv[arg_index]);
+    while(arg_index < main_args_size){
+        arguments.emplace_back(main_args[arg_index]);
         ++arg_index;
     }
 

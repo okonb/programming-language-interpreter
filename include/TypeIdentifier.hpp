@@ -38,7 +38,7 @@ public:
         return s.str();
     }
     bool operator==(const TypeIdentifier<T> &other) const {return type == other.get_type() && is_const == other.get_is_const();}
-    static const std::basic_string_view<T> &get_type_text(const Type t) {return type_map.at(t);}
+    static const std::basic_string_view<T> get_type_text(const Type t) {return type_map.at(t);}
 private:
     Type type;
     bool is_const;

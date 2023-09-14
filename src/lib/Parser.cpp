@@ -673,7 +673,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_operation(){
     auto args = try_parse_parenths_and_args();
     expect_not_null(args, "parenths_and_args");
 
-    if(args->size() == 0ul){
+    if(args->size() == 0UL){
         throw get_syntax_error_exception(">0 arguments");
     }
     auto match_block = try_parse_match_block();
@@ -763,7 +763,7 @@ UnexpectedTokenException<T> ParserBase<T>::get_unexpected_token_exception(const 
 }
 
 template<CharType T>
-SyntaxErrorException<T> ParserBase<T>::get_syntax_error_exception(const std::basic_string_view<T> &text, const std::source_location &location) const {
+SyntaxErrorException<T> ParserBase<T>::get_syntax_error_exception(const std::basic_string_view<T> text, const std::source_location &location) const {
     return SyntaxErrorException<T>(location.function_name(), current_token, text);
 }
 

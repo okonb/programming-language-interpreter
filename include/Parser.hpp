@@ -18,7 +18,7 @@
 template<CharType T>
 class UnexpectedTokenException : public std::runtime_error{
 public:
-    UnexpectedTokenException(const std::basic_string_view<T> &function_name, const Token<T> &t, const std::initializer_list<TokenType> &types) :
+    UnexpectedTokenException(const std::basic_string_view<T> function_name, const Token<T> &t, const std::initializer_list<TokenType> &types) :
         std::runtime_error{"UnexpectedTokenException"}, function_throwing{function_name}, token{t}, expected_tokens{types} {}
     const std::basic_string<T> &get_function_throwing_name() const {return function_throwing;}
     const Token<T> &get_received_token() const {return token;}
@@ -32,7 +32,7 @@ private:
 template<CharType T>
 class SyntaxErrorException : public std::runtime_error{
 public:
-    SyntaxErrorException(const std::basic_string_view<T> &function_name, const Token<T> &t, const std::basic_string_view<T> &e) :
+    SyntaxErrorException(const std::basic_string_view<T> function_name, const Token<T> &t, const std::basic_string_view<T> e) :
         std::runtime_error{"SyntaxErrorException"}, function_throwing{function_name}, token{t}, expected{e} {}
     const std::basic_string<T> &get_function_throwing_name() const {return function_throwing;}
     const Token<T> &get_received_token() const {return token;}
@@ -99,7 +99,7 @@ public:
     void expect_not_null(std::unique_ptr<P> &pointer, const std::basic_string_view<T> err_message, const std::source_location &location = std::source_location::current()) const;
     
     UnexpectedTokenException<T> get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location = std::source_location::current()) const;
-    SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string_view<T> &text, const std::source_location &location = std::source_location::current()) const;
+    SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string_view<T> text, const std::source_location &location = std::source_location::current()) const;
     
     Type map_to_type(TokenType type) const;
     ExpressionType map_to_expression_type(TokenType type) const;

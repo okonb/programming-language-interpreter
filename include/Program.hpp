@@ -14,7 +14,7 @@
 template<CharType T>
 class ProgramInitializationError : public std::runtime_error{
 public:
-    ProgramInitializationError(const std::basic_string<T> &error_msg, const std::basic_string<T> &function_name = "") :
+    ProgramInitializationError(const std::basic_string<T> &error_msg, const std::basic_string_view<T> function_name = "") :
         std::runtime_error{error_msg}, doubled_function{function_name} {}
     const std::basic_string<T> &get_doubled_function_name() const {return doubled_function;}
 private:

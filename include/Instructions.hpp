@@ -25,7 +25,7 @@ private:
 template<CharType T>
 class AssignmentInstruction : public IInstruction<T>{
 public:
-    AssignmentInstruction(const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
+    AssignmentInstruction(const std::basic_string_view<T> n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
         IInstruction<T>{pos}, name{n}, expression(std::move(e)) {}
     ~AssignmentInstruction() override = default;
     
@@ -40,7 +40,7 @@ private:
 template<CharType T>
 class VarDefinitionInstruction : public IInstruction<T>{
 public:
-    VarDefinitionInstruction(std::unique_ptr<TypeIdentifier<T>> &t, const std::basic_string<T> &n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
+    VarDefinitionInstruction(std::unique_ptr<TypeIdentifier<T>> &t, const std::basic_string_view<T> n, std::unique_ptr<IExpression<T>> e, const Position &pos) :
         IInstruction<T>{pos}, type{std::move(t)}, name{n}, expression(std::move(e)) {}
     ~VarDefinitionInstruction() override = default;
     

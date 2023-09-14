@@ -13,7 +13,7 @@
 template<CharType T>
 class TokenizationError : public std::runtime_error {
 public:
-    explicit TokenizationError(std::basic_string<T> msg, const Position &p) noexcept :
+    TokenizationError(const std::basic_string<T> &msg, const Position &p) :
         std::runtime_error{msg}, pos(p) {}
 
     [[nodiscard]] const Position &get_position() const noexcept { return pos; }
@@ -28,7 +28,7 @@ public:
     ~Lexer() override;
 
     Token<T> get_next_token() override;
-    static const std::basic_string_view<T> get_token_text(const TokenType t);
+    static std::basic_string_view<T> get_token_text(const TokenType t);
 
 private:
     std::optional<Token<T>> try_build_etx();

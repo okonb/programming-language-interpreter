@@ -191,7 +191,7 @@ Lexer<T>::~Lexer() {
 }
 
 template<CharType T>
-const std::basic_string_view<T> Lexer<T>::get_token_text(const TokenType t) {
+std::basic_string_view<T> Lexer<T>::get_token_text(const TokenType t) { //TODO maybe the return type should be const afterall...
     return token_to_text.at(t);
 }
 
@@ -258,19 +258,19 @@ std::optional<Token<T>> Lexer<T>::try_build_number(){
         return std::nullopt;
     }
     int64_t integer_part = 0;
-    constexpr int number_base = 10;
+    constexpr static int number_base = 10;
     if(current_symbol != '0'){
         integer_part = current_symbol - '0';
         while(advance_character() && is_current_digit()){
             const int current_digit = current_symbol - '0';
-            if((std::numeric_limits<int64_t>::max() - current_digit) / static_cast<double>(number_base) < integer_part){
+            if((std::numeric_limits<int64_t>::max() - current_digit) / number_base < integer_part){
                 throw TokenizationError<T>("Error building number - integer part digit string too long.", start_position);
             }
             integer_part = number_base * integer_part + current_digit;
         }
     }
     else if(!advance_character()){
-        return Token<T>(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
+        return Token<T>(TokenType::Integer_literal, start_position, integer_part);
     }
     else if(is_current_digit()){
         throw TokenizationError<T>("Error - numeric literal must not start with a zero.", start_position);
@@ -285,7 +285,7 @@ std::optional<Token<T>> Lexer<T>::try_build_number(){
         int decimal_places = 0;
         while(advance_character() && is_current_digit()){
             const int current_digit = current_symbol - '0';
-            if((std::numeric_limits<int64_t>::max() - current_digit) / static_cast<double>(number_base) < integer_part){
+            if((std::numeric_limits<int64_t>::max() - current_digit) / number_base < integer_part){
                 throw TokenizationError<T>("Error building number - floating part digit string too long.", start_position);
             }
             decimal_part = number_base * decimal_part + current_digit;
@@ -299,7 +299,7 @@ std::optional<Token<T>> Lexer<T>::try_build_number(){
         }
         return Token<T>(TokenType::Floating_literal, start_position, static_cast<double>(integer_part) + static_cast<double>(decimal_part) / pow(number_base, decimal_places));
     }
-    return Token<T>(TokenType::Integer_literal, start_position, static_cast<int64_t>(integer_part));
+    return Token<T>(TokenType::Integer_literal, start_position, integer_part);
 }
 
 template<CharType T>
@@ -399,7 +399,7 @@ void Lexer<T>::skip_whitespace(){
 
 template<CharType T>
 void Lexer<T>::consume_newline(){
-    for([[maybe_unused]] const auto &_ : *newline_sequence){
+    for([[maybe_unused]] const auto &_ : *newline_sequence){    //TODO unguarded optional access
         advance_character();
     }
     feed_line();

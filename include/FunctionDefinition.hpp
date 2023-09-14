@@ -16,7 +16,7 @@
 template<CharType T = char>
 class FunctionDefinition : public IVisitable<T>{
 public:
-    FunctionDefinition(const std::basic_string<T> &n, std::unique_ptr<TypeIdentifier<T>> t, std::unique_ptr<std::vector<std::unique_ptr<ParameterDefinition<T>>>> p, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> b, const Position &pos) :
+    FunctionDefinition(const std::basic_string_view<T> n, std::unique_ptr<TypeIdentifier<T>> t, std::unique_ptr<std::vector<std::unique_ptr<ParameterDefinition<T>>>> p, std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> b, const Position &pos) :
         name{n}, type{std::move(t)}, parameters{std::move(p)}, block{std::move(b)}, position{pos} {}
     FunctionDefinition(FunctionDefinition<T>&&) noexcept = default;
     FunctionDefinition& operator=(FunctionDefinition<T>&&) noexcept = default;
