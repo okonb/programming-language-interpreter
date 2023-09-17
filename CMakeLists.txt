@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "")
 set(CMAKE_CXX_EXTENSIONS OFF)
 #set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-modernize-redundant-void-arg,-misc-no-recursion,-google-readability-todo")
-set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror -Wconversion)
+set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror -Wconversion )
+# -fsanitize=undefined -fsanitize-minimal-runtime
+# add_link_options("-fsanitize=undefined")
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
@@ -38,7 +40,7 @@ target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3
 add_executable(main src/main.cpp)
 
 target_compile_options(main PUBLIC ${GENERAL_FLAGS} -O3)
-target_compile_options(main PUBLIC ${GENERAL_FLAGS} -O3)
+
 
 target_link_libraries(main PUBLIC tkom_proj_lib)
 

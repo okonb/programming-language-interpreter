@@ -12,7 +12,7 @@
 constexpr bool PRINT_TREE_BEFORE_EXECUTION = true;
 
 
-using namespace std::literals;
+using std::literals::operator""sv;
 
 
 int main(int argc, char** argv){
@@ -27,14 +27,17 @@ int main(int argc, char** argv){
     }
     
     std::ifstream infile{main_args[1]};
-    infile.unsetf(std::ios::skipws);
+    if(!infile){
+        std::cerr << "Provided path to the program invalid.\n";
+        return 1;
+    }
 
     std::vector<std::string> arguments{};
 
     std::size_t arg_index = 2;
 
     //skip additional program arguments
-    while(arg_index < main_args_size and "--"s != main_args[arg_index]){
+    while(arg_index < main_args_size and "--"sv != main_args[arg_index]){
         ++arg_index;
     }
     //skip --
@@ -45,7 +48,7 @@ int main(int argc, char** argv){
         ++arg_index;
     }
 
-    int return_code = 1;
+    int64_t return_code = 1;
 
     Lexer lex(infile);
     CommentFilterLexer<char> filered_lex{lex};
@@ -58,10 +61,11 @@ int main(int argc, char** argv){
             ProgramTreePrinter<char>{std::cout}.print_program(*program);
         }
         Interpreter<char> inter{std::move(program), std::cout, arguments};
-        return_code = static_cast<int>(inter.run());
+        return_code = inter.run();
     }
     catch(TokenizationError<char> &e){
-        std::cerr << e.what() << "\nAt position " << e.get_position().line << ":" << e.get_position().column << "\n";
+        const auto [line, column] = e.get_position();
+        std::cerr << e.what() << "\nAt position " << line << ":" << column << "\n";
     }
     catch(UnexpectedTokenException<char> &e){
         std::cerr << e.what() << " in parsing function " << e.get_function_throwing_name() << ". Expected:\n";
@@ -88,13 +92,15 @@ int main(int argc, char** argv){
     }
 
     catch(VariableAssignmentTypeMismatchException<char> &e){
+        const auto [line, column] = e.get_position();
         std::cerr << e.what() << " Variable name: " << e.get_variable_name() << ", type: "<< e.get_variable_type().get_str_representation() << "\n";
-        std::cerr << "Tried assigning " << TypeIdentifier<char>::get_type_text(e.get_value_type()) << " instead, at " <<e.get_position().line << ":" << e.get_position().column << "\n";
+        std::cerr << "Tried assigning " << TypeIdentifier<char>::get_type_text(e.get_value_type()) << " instead, at " << line << ":" << column << "\n";
     }
 
     catch(ReturnValueTypeMismatchException<char> &e){
+        const auto [line, column] = e.get_position();
         std::cerr << e.what() << " Function name: " << e.get_function_name() << ", type: "<< e.get_return_type().get_str_representation() << "\n";
-        std::cerr << "Tried returning " << TypeIdentifier<char>::get_type_text(e.get_value_type()) << " instead, at " <<e.get_position().line << ":" << e.get_position().column << "\n";
+        std::cerr << "Tried returning " << TypeIdentifier<char>::get_type_text(e.get_value_type()) << " instead, at " << line << ":" << column << "\n";
     }
 
     catch(FunctionArgumentMismatchException<char> &e){
@@ -106,7 +112,8 @@ int main(int argc, char** argv){
         for(const auto &type : e.get_gotten_type_list()){
             std::cerr << type.get_str_representation() << ", ";
         }
-        std::cerr << "\nAt " <<e.get_position().line << ":" << e.get_position().column << "\n";
+        const auto [line, column] = e.get_position();
+        std::cerr << "\nAt " << line << ":" << column << "\n";
     }
 
     catch(OperatorArgumentMismatchException<char> &e){
@@ -122,14 +129,17 @@ int main(int argc, char** argv){
         for(const auto &type : e.get_gotten_type_list()){
             std::cerr << TypeIdentifier<char>::get_type_text(type) << ", ";
         }
-        std::cerr << "\nAt " <<e.get_position().line << ":" << e.get_position().column << "\n";
+        const auto [line, column] = e.get_position();
+        std::cerr << "\nAt " << line << ":" << column << "\n";
     }
 
     catch(SimpleTextException<char> &e){
-        std::cerr << e.what() << " In " << e.get_name() << " at " << e.get_position().line << ":" <<  e.get_position().column << ".\n";
+        const auto [line, column] = e.get_position();
+        std::cerr << e.what() << " In " << e.get_name() << " at " << line << ":" <<  column << ".\n";
     }
     catch(SimpleException<char> &e){
-        std::cerr << e.what() << " At " << e.get_position().line << ":" <<  e.get_position().column << ".\n";
+        const auto [line, column] = e.get_position();
+        std::cerr << e.what() << " At " << line << ":" <<  column << ".\n";
     }
     catch(std::exception &e){
         std::cerr << e.what();
@@ -137,5 +147,5 @@ int main(int argc, char** argv){
     catch(...){
         std::cerr << "unknown exception\n";
     }
-    return return_code;
+    return static_cast<int>(return_code);
 }

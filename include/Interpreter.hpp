@@ -274,6 +274,7 @@ private:
     std::unique_ptr<FunctionDefinition<T>> &get_function(const std::basic_string<T> &name);
     std::shared_ptr<Variable<T>> get_variable_from_current_context(const std::basic_string<T> &name);
     bool is_function_pointer_valid(const std::unique_ptr<FunctionDefinition<T>> & ptr);
+    /*
     bool is_value_bool(const value_t<T> &v);
     bool is_value_int(const value_t<T> &v);
     bool is_value_float(const value_t<T> &v);
@@ -282,6 +283,7 @@ private:
     bool is_current_value_int();
     bool is_current_value_float();
     bool is_current_value_string();
+    */
     bool is_current_value_of_type(Type type);
     bool is_variable_name_in_current_scope(const std::basic_string<T> &name);
     bool is_variable_name_in_current_context(const std::basic_string<T> &name);

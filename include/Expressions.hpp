@@ -15,7 +15,7 @@ public:
     SingleArgExpression(const ExpressionType t, std::unique_ptr<IExpression<T>> expr, const Position &pos) :
         IExpression<T>{t, pos}, expression{std::move(expr)} {}
     ~SingleArgExpression() override = default;
-    std::unique_ptr<IExpression<T>> &get_expression() {return expression;}
+    std::unique_ptr<IExpression<T>> &get_expression() {return expression;}  //TODO figure out a way to const this
     
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 
@@ -29,8 +29,8 @@ public:
     TwoArgExpression(const ExpressionType t, std::unique_ptr<IExpression<T>> l_expr, std::unique_ptr<IExpression<T>> r_expr, const Position &pos) :
         IExpression<T>{t, pos}, left_expression{std::move(l_expr)}, right_expression{std::move(r_expr)} {}
     ~TwoArgExpression() override = default;
-    std::unique_ptr<IExpression<T>> const &get_left_expression() const {return left_expression;}
-    std::unique_ptr<IExpression<T>> const &get_right_expression() const {return right_expression;}
+    const std::unique_ptr<IExpression<T>> &get_left_expression() const {return left_expression;}
+    const std::unique_ptr<IExpression<T>> &get_right_expression() const {return right_expression;}
     
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
@@ -44,7 +44,7 @@ public:
     LiteralExpression(const ExpressionType t, const value_t<T> &v, const Position &pos) :
         IExpression<T>{t, pos}, value{v} {}
     ~LiteralExpression() override = default;
-    value_t<T> get_value() const {return value;}
+    const value_t<T> &get_value() const {return value;}
     
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
@@ -71,8 +71,8 @@ public:
         IExpression<T>{ExpressionType::FunctionCallExpression, pos}, name{n}, arguments{std::move(args)} {}
     ~FunctionCall() override = default;
     
-    const std::basic_string<T> &get_name() {return name;}
-    std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> const &get_arguments() {return arguments;}
+    const std::basic_string<T> &get_name() const {return name;}
+    const std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> &get_arguments() const {return arguments;}
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
     std::basic_string<T> name;
@@ -86,8 +86,8 @@ public:
         IExpression<T>{ExpressionType::MatchExpression, pos}, arguments{std::move(args)}, block(std::move(b)) {}
     ~MatchOperation() override = default;
     
-    std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> const &get_arguments(){return arguments;}
-    std::unique_ptr<std::vector<std::unique_ptr<MatchLine<T>>>> const &get_block(){return block;}
+    const std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> &get_arguments() const {return arguments;}
+    const std::unique_ptr<std::vector<std::unique_ptr<MatchLine<T>>>> &get_block() const {return block;}
     void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
 private:
     std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> arguments;

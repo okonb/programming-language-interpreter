@@ -6,7 +6,7 @@
 // intentional conversion warning suppression to facilitate expected behaviour
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
-template<CharType T, NumericType P = int64_t, NumericType R = int64_t>
+template<CharType T, NumericType P = int64_t, NumericType R = int64_t>  //TODO put in anonymous namespace
 class Resolver{
 public:
     inline const static light_map<ExpressionType, std::function<value_t<T>(P, R)>, 10UL> numeric_map{
@@ -96,8 +96,9 @@ template<CharType T>
 int64_t Interpreter<T>::run(const std::basic_string<T> &to_start_name){
     FunctionCall<T> funcall{to_start_name, std::make_unique<std::vector<std::unique_ptr<IExpression<T>>>>(), Position()};
     funcall.accept(*this);
-    if(std::holds_alternative<int64_t>(current_value)){
-        return std::get<int64_t>(current_value);
+    const auto *return_value_ptr = std::get_if<int64_t>(&current_value);
+    if(return_value_ptr){
+        return *return_value_ptr;
     }
     return -1;
 }  
@@ -175,11 +176,13 @@ void Interpreter<T>::visit(IfInstruction<T> &instr){
         throw NoConditionException<T>("if", instr.get_position());
     }
     instr.get_condition()->accept(*this);
-    if(!is_current_value_bool()){
+
+    const auto *condition_ptr = std::get_if<bool>(&current_value);
+    if(!condition_ptr){
         throw NonBooleanConditionException<T>("if", instr.get_position());
     }
-    auto condition = std::get<bool>(current_value);
-    if(condition){
+    
+    if(*condition_ptr){
         execute_block(*instr.get_code_block());
     }
     else{
@@ -195,18 +198,21 @@ void Interpreter<T>::visit(WhileInstruction<T> &instr){
         throw NoConditionException<T>("while", instr.get_position());
     }
     instr.get_condition()->accept(*this);
-    if(!is_current_value_bool()){
+
+    const auto *condition_ptr = std::get_if<bool>(&current_value);
+
+    if(!condition_ptr){
         throw NonBooleanConditionException<T>("while", instr.get_position());
     }
     
-    auto condition = std::get<bool>(current_value);
-    while(condition){
+    
+    while(*condition_ptr){
         execute_block(*instr.get_code_block());
         if(return_flag){
             return;
         }
         instr.get_condition()->accept(*this);
-        condition = std::get<bool>(current_value);
+        condition_ptr = std::get_if<bool>(&current_value);
     }
 }
 
@@ -222,34 +228,32 @@ void Interpreter<T>::visit(SingleArgExpression<T> &expr){
     }
     expr.get_expression()->accept(*this);
     if(expr_type == ExpressionType::NegateNumberExpression || expr_type == ExpressionType::MatchNegateNumberExpression){
-        auto val = std::visit(overload{
+        current_value = std::visit(overload{
             [](NumericType auto v)  -> value_t<T> { return -v; },
             [](auto)                -> value_t<T> { return {}; },
         }, current_value);
 
-        if(std::holds_alternative<std::monostate>(val)){
+        if(std::holds_alternative<std::monostate>(current_value)){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Integer, Type::Floating}, {}, {get_current_value_type()}, expr.get_position());
         }
-        current_value = val;
         return;
     }
 
     if(expr_type == ExpressionType::NotExpression || expr_type == ExpressionType::MatchNotExpression){
-        const value_t<T> val = std::visit(overload{
+        current_value = std::visit(overload{
             [](bool v)  -> value_t<T> { return !v; },
             [](auto)    -> value_t<T> { return {}; },
         }, current_value);
 
-        if(std::holds_alternative<std::monostate>(val)){
+        if(std::holds_alternative<std::monostate>(current_value)){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Bool}, {}, {get_current_value_type()}, expr.get_position());
         }
-        current_value = val;
         return;
     }
     if(is_expression_match(expr_type)){
         auto new_expression_type = map_from_match(expr_type);
         TwoArgExpression<T> new_expr{new_expression_type, nullptr, std::move(expr.get_expression()), expr.get_position()};
-        new_expr.accept(*this);
+        new_expr.accept(*this); //TODO hacky?
     }
 }
 
@@ -268,58 +272,60 @@ void Interpreter<T>::visit(TwoArgExpression<T> &expr){
         throw NullpointerException<T>();
     }
     if(expr_type == ExpressionType::AndExpression){
-        if(!is_value_bool(left_value)){
+        const auto *left_value_bool_ptr = std::get_if<bool>(&left_value);
+        if(!left_value_bool_ptr){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Bool}, {Type::Bool}, {get_value_type(left_value)}, expr.get_position());
         }
-        const bool left_value_bool = std::get<bool>(left_value);
-        if(!left_value_bool){
+        if(!(*left_value_bool_ptr)){
             current_value = false;
             return;
         }
         expr.get_right_expression()->accept(*this);
-        auto right_value = current_value;
-        if(!is_value_bool(right_value)){
+        const auto &right_value = current_value;
+        const auto *right_value_bool_ptr = std::get_if<bool>(&right_value);
+        if(!right_value_bool_ptr){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Bool}, {Type::Bool}, {get_value_type(left_value), get_value_type(right_value)}, expr.get_position());
         }
-        const bool right_value_bool = std::get<bool>(right_value);
-        current_value = left_value_bool && right_value_bool;
+        
+        current_value = *left_value_bool_ptr && *right_value_bool_ptr;
         return;
     }
 
     if(expr_type == ExpressionType::OrExpression){
-        if(!is_value_bool(left_value)){
+        const auto *left_value_bool_ptr = std::get_if<bool>(&left_value);
+        if(!left_value_bool_ptr){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Bool}, {Type::Bool}, {get_value_type(left_value)}, expr.get_position());
         }
-        const bool left_value_bool = std::get<bool>(left_value);
-        if(left_value_bool){
+        
+        if(*left_value_bool_ptr){
             current_value = true;
             return;
         }
         expr.get_right_expression()->accept(*this);
-        auto right_value = current_value;
-        if(!is_value_bool(right_value)){
+        const auto &right_value = current_value;
+        const auto *right_value_bool_ptr = std::get_if<bool>(&right_value);
+        if(!right_value_bool_ptr){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Bool}, {Type::Bool}, {get_value_type(left_value), get_value_type(right_value)}, expr.get_position());
         }
-        const bool right_value_bool = std::get<bool>(right_value);
-        current_value = left_value_bool || right_value_bool;
+        current_value = *left_value_bool_ptr || *right_value_bool_ptr;
         return;
     }
 
     if(expr_type == ExpressionType::ModuloExpression){
-        if(!is_value_int(left_value)){
+        const auto *left_value_int_ptr = std::get_if<int64_t>(&left_value);
+        if(!left_value_int_ptr){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Integer}, {Type::Integer}, {get_value_type(left_value)}, expr.get_position());
         }
-        const int64_t left_value_int = std::get<int64_t>(left_value);
         expr.get_right_expression()->accept(*this);
-        auto right_value = current_value;
-        if(!is_value_int(right_value)){
-            throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Bool}, {Type::Bool}, {get_value_type(left_value), get_value_type(right_value)}, expr.get_position());
+        const auto &right_value = current_value;
+        const auto *right_value_int_ptr = std::get_if<int64_t>(&right_value);
+        if(!right_value_int_ptr){
+            throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Integer}, {Type::Integer}, {get_value_type(left_value), get_value_type(right_value)}, expr.get_position());
         }
-        const int64_t right_value_int = std::get<int64_t>(right_value);
-        if(right_value_int == 0){
+        if(*right_value_int_ptr == 0){
             throw DivisionByZeroException<T>(expr.get_string_repr(), expr.get_position());
         }
-        current_value = left_value_int % right_value_int;
+        current_value = *left_value_int_ptr % *right_value_int_ptr;
         return;
     }
 
@@ -327,10 +333,8 @@ void Interpreter<T>::visit(TwoArgExpression<T> &expr){
     expr.get_right_expression()->accept(*this);
     auto right_value = current_value;
 
-    value_t<T> result{};
-
     try{
-        result = std::visit(overload{
+        current_value = std::visit(overload{
             [&expr_type](NumericType auto l, NumericType auto r)                        {return Resolver<T, decltype(l), decltype(r)>::resolve_numeric(expr_type)(l, r);},
             [&expr_type](const bool l, const bool r)                                    {return Resolver<T>::resolve_bool(expr_type)(l, r);},
             [&expr_type](const std::basic_string<T> &l, const std::basic_string<T> &r)  {return Resolver<T>::resolve_string(expr_type)(l, r);},
@@ -344,10 +348,9 @@ void Interpreter<T>::visit(TwoArgExpression<T> &expr){
     catch(...){
         throw;
     }
-    if(std::holds_alternative<std::monostate>(result)){
+    if(std::holds_alternative<std::monostate>(current_value)){
         throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {}, {}, {get_value_type(left_value), get_value_type(right_value)}, expr.get_position());
     }
-    current_value = result;
 }
 
 template<CharType T>
@@ -357,7 +360,7 @@ void Interpreter<T>::visit(LiteralExpression<T> &expr){
 
 template<CharType T>
 void Interpreter<T>::visit(IdentifierExpression<T> &expr){
-    auto name = expr.get_value();
+    const auto &name = expr.get_value();
     if(name == "EOF_MARKER"){   //no global variables :(
         current_value = "\x03";
         return;
@@ -375,7 +378,7 @@ void Interpreter<T>::visit(IdentifierExpression<T> &expr){
             }
             auto &parameters = function->get_parameters();
            
-            if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){
+            if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){   //TODO wasn't it supposed to work a different way... 
                 throw InvalidPatternFunctionSignatureException<T>(expr.get_position());
             }
             std::vector<TypeIdentifier<T>> argument_types{};
@@ -489,7 +492,7 @@ void Interpreter<T>::visit(MatchOperation<T> &instr){
             (*pattern)[i]->accept(*this);
             match_flag = true;
             if(get_current_value_type() != get_value_type(argument_values[i])){
-                if(is_current_value_bool() && std::get<bool>(current_value)){
+                if(const auto *bool_ptr = std::get_if<bool>(&current_value); bool_ptr && *bool_ptr){
                     increment_current_match_index();
                     continue;
                 }
@@ -544,7 +547,7 @@ std::shared_ptr<Variable<T>> Interpreter<T>::get_variable_from_current_context(c
     return nullptr;
 }
 
-
+/*
 template<CharType T>
 bool Interpreter<T>::is_value_bool(const value_t<T> &v){
     return std::holds_alternative<bool>(v);
@@ -584,7 +587,7 @@ template<CharType T>
 bool Interpreter<T>::is_current_value_string(){
     return std::holds_alternative<std::basic_string<T>>(current_value);
 }
-
+*/
 template<CharType T>
 bool Interpreter<T>::is_current_value_of_type(Type type){
     return get_current_value_type() == type || (type == Type::File && get_current_value_type() == Type::String);
