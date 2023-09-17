@@ -531,7 +531,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_relation(){
     auto math_expression = try_parse_match_math_expression();
     expect_not_null(math_expression, "match_math_expression");
 
-    return std::make_unique<SingleArgExpression<T>>(type, std::move(math_expression), start_position);
+    return std::make_unique<TwoArgExpression<T>>(type, nullptr, std::move(math_expression), start_position);
 }
 
 // match_math_expression = match_factor, {(Plus | Minus | String_concat), match_factor};

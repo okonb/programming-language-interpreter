@@ -1334,8 +1334,8 @@ TEST(ParserTest, try_parse_match_expression){
   auto &left = expr->get_left_expression();
   auto &right = expr->get_right_expression();
   ASSERT_EQ(expr->get_string_repr(), "MatchAndExpression");
-  ASSERT_EQ(dynamic_cast<SingleArgExpression<char>*>(left.get())->get_expression_type(), ExpressionType::MatchLtExpression);
-  ASSERT_EQ(dynamic_cast<SingleArgExpression<char>*>(right.get())->get_expression_type(), ExpressionType::MatchGtExpression);
+  ASSERT_EQ(dynamic_cast<TwoArgExpression<char>*>(left.get())->get_expression_type(), ExpressionType::MatchLtExpression);
+  ASSERT_EQ(dynamic_cast<TwoArgExpression<char>*>(right.get())->get_expression_type(), ExpressionType::MatchGtExpression);
 }
 
 TEST(ParserTest, try_parse_pattern1){

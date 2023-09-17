@@ -37,18 +37,18 @@ private:
     std::optional<Token<T>> try_build_identifier_or_keyword();
     std::optional<Token<T>> try_build_comment();
     std::optional<Token<T>> try_build_string();
+    bool advance_character();
     void skip_whitespace();
     void consume_newline();
     void detect_newline_sequence();
-    void feed_line();
-    bool advance_character();
-    bool is_current_digit() const;
-    bool is_current_alpha() const;
-    bool is_current_alnum() const;
-    bool is_current_space() const;
-    bool is_current_blank() const;
-    bool is_current_underscore() const;
-    bool is_current_newline() const;
+    void feed_line() noexcept;
+    bool is_current_digit() const noexcept;
+    bool is_current_alpha() const noexcept;
+    bool is_current_alnum() const noexcept;
+    bool is_current_space() const noexcept;
+    bool is_current_blank() const noexcept;
+    bool is_current_underscore() const noexcept;
+    bool is_current_newline() const noexcept;
 
 private:
     T current_symbol;

@@ -24,20 +24,20 @@ private:
             stream << " |";
     }
 
-    void visit(FunctionDefinition<T> &instr) override;
-    void visit(ReturnInstruction<T> &instr) override;
-    void visit(AssignmentInstruction<T> &instr) override;
-    void visit(VarDefinitionInstruction<T> &instr) override;
-    void visit(IfInstruction<T> &instr) override;
-    void visit(WhileInstruction<T> &instr) override;
+    void visit(const FunctionDefinition<T> &instr) override;
+    void visit(const ReturnInstruction<T> &instr) override;
+    void visit(const AssignmentInstruction<T> &instr) override;
+    void visit(const VarDefinitionInstruction<T> &instr) override;
+    void visit(const IfInstruction<T> &instr) override;
+    void visit(const WhileInstruction<T> &instr) override;
 
-    void visit(SingleArgExpression<T> &expr) override;
-    void visit(TwoArgExpression<T> &expr) override;
-    void visit(LiteralExpression<T> &expr) override;
-    void visit(IdentifierExpression<T> &expr) override;
-    void visit(FunctionCall<T> &expr) override;
-    
-    void visit(MatchOperation<T> &expr) override;
+    void visit(const SingleArgExpression<T> &expr) override;
+    void visit(const TwoArgExpression<T> &expr) override;
+    void visit(const LiteralExpression<T> &expr) override;
+    void visit(const IdentifierExpression<T> &expr) override;
+    void visit(const FunctionCall<T> &expr) override;
+ 
+    void visit(const MatchOperation<T> &expr) override;
 
     class level_guard{
     public:

@@ -426,43 +426,43 @@ void Lexer<T>::detect_newline_sequence(){
 }
 
 template<CharType T>
-void Lexer<T>::feed_line(){
+void Lexer<T>::feed_line() noexcept{
     current_position.line++;
     current_position.column = 1;
 }
 
 template<>
-bool Lexer<char>::is_current_digit() const{
+bool Lexer<char>::is_current_digit() const noexcept{
     return static_cast<bool>(std::isdigit(static_cast<unsigned char>(current_symbol)));
 }
 
 template<>
-bool Lexer<char>::is_current_alpha() const{
+bool Lexer<char>::is_current_alpha() const noexcept{
     return static_cast<bool>(std::isalpha(static_cast<unsigned char>(current_symbol)));
 }
 
 template<>
-bool Lexer<char>::is_current_alnum() const{
+bool Lexer<char>::is_current_alnum() const noexcept{
     return static_cast<bool>(std::isalnum(static_cast<unsigned char>(current_symbol)));
 }
 
 template<>
-bool Lexer<char>::is_current_space() const{
+bool Lexer<char>::is_current_space() const noexcept{
     return static_cast<bool>(std::isspace(static_cast<unsigned char>(current_symbol)));
 }
 
 template<>
-bool Lexer<char>::is_current_blank() const{
+bool Lexer<char>::is_current_blank() const noexcept{
     return static_cast<bool>(std::isblank(static_cast<unsigned char>(current_symbol)));
 }
 
 template<>
-bool Lexer<char>::is_current_underscore() const{
+bool Lexer<char>::is_current_underscore() const noexcept{
     return current_symbol == '_';
 }
 
 template<>
-bool Lexer<char>::is_current_newline() const{
+bool Lexer<char>::is_current_newline() const noexcept{
     return is_current_space() && !is_current_blank();
 }
 

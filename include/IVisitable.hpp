@@ -8,7 +8,7 @@ template<CharType T>
 class IVisitable{
 public:
     virtual ~IVisitable() = default;
-    virtual void accept(IVisitor<T> &visitor) = 0;
+    virtual void accept(IVisitor<T> &visitor) const = 0;
 };
 
 

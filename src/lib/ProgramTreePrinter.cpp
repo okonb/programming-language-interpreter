@@ -15,7 +15,7 @@ void ProgramTreePrinter<T>::print_program(const Program<T> &program){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(FunctionDefinition<T> &instr)
+void ProgramTreePrinter<T>::visit(const FunctionDefinition<T> &instr)
 {
     const auto guard = get_guard();
     print_spacing();
@@ -41,7 +41,7 @@ void ProgramTreePrinter<T>::visit(FunctionDefinition<T> &instr)
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(ReturnInstruction<T> &instr){
+void ProgramTreePrinter<T>::visit(const ReturnInstruction<T> &instr){
     const auto guard = get_guard();
     print_spacing();
     stream << "ReturnInstruction:\n";
@@ -56,7 +56,7 @@ void ProgramTreePrinter<T>::visit(ReturnInstruction<T> &instr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(AssignmentInstruction<T> &instr){
+void ProgramTreePrinter<T>::visit(const AssignmentInstruction<T> &instr){
     const auto guard = get_guard();
     print_spacing();
     stream << "AssignmentInstruction: " << instr.get_name() << " = \n";
@@ -64,7 +64,7 @@ void ProgramTreePrinter<T>::visit(AssignmentInstruction<T> &instr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(VarDefinitionInstruction<T> &instr){
+void ProgramTreePrinter<T>::visit(const VarDefinitionInstruction<T> &instr){
     const auto guard = get_guard();
     print_spacing();
     stream << "VarDefinitionInstruction: " << instr.get_name() << " : " << instr.get_type()->get_str_representation() << " = \n";
@@ -72,7 +72,7 @@ void ProgramTreePrinter<T>::visit(VarDefinitionInstruction<T> &instr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(IfInstruction<T> &instr){
+void ProgramTreePrinter<T>::visit(const IfInstruction<T> &instr){
     const auto guard = get_guard();
     const auto &condition = instr.get_condition();
     const auto &code_block = instr.get_code_block();
@@ -98,7 +98,7 @@ void ProgramTreePrinter<T>::visit(IfInstruction<T> &instr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(WhileInstruction<T> &instr){
+void ProgramTreePrinter<T>::visit(const WhileInstruction<T> &instr){
     const auto guard = get_guard();
     const auto &condition = instr.get_condition();
     const auto &code_block = instr.get_code_block();
@@ -115,7 +115,7 @@ void ProgramTreePrinter<T>::visit(WhileInstruction<T> &instr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(SingleArgExpression<T> &expr){
+void ProgramTreePrinter<T>::visit(const SingleArgExpression<T> &expr){
     const auto guard = get_guard();
     print_spacing();
     stream << expr.get_string_repr() << "\n";
@@ -133,7 +133,7 @@ void ProgramTreePrinter<T>::visit(SingleArgExpression<T> &expr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(TwoArgExpression<T> &expr){
+void ProgramTreePrinter<T>::visit(const TwoArgExpression<T> &expr){
     const auto guard = get_guard();
     print_spacing();
     stream << expr.get_string_repr() << "\n";
@@ -153,7 +153,7 @@ void ProgramTreePrinter<T>::visit(TwoArgExpression<T> &expr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(LiteralExpression<T> &expr){
+void ProgramTreePrinter<T>::visit(const LiteralExpression<T> &expr){
     const auto guard = get_guard();
     const auto &value = expr.get_value();
     print_spacing();
@@ -165,14 +165,14 @@ void ProgramTreePrinter<T>::visit(LiteralExpression<T> &expr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(IdentifierExpression<T> &expr){
+void ProgramTreePrinter<T>::visit(const IdentifierExpression<T> &expr){
     const auto guard = get_guard();
     print_spacing();
     stream << expr.get_string_repr() << ", value: " << expr.get_value() << "\n";
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(FunctionCall<T> &expr){
+void ProgramTreePrinter<T>::visit(const FunctionCall<T> &expr){
     const auto guard = get_guard();
     const auto &arguments = expr.get_arguments();
     print_spacing();
@@ -187,7 +187,7 @@ void ProgramTreePrinter<T>::visit(FunctionCall<T> &expr){
 }
 
 template <CharType T>
-void ProgramTreePrinter<T>::visit(MatchOperation<T> &expr){
+void ProgramTreePrinter<T>::visit(const MatchOperation<T> &expr){
     const auto guard = get_guard();
     const auto &arguments = expr.get_arguments();
     const auto &block = expr.get_block();

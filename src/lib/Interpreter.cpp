@@ -105,7 +105,7 @@ int64_t Interpreter<T>::run(const std::basic_string<T> &to_start_name){
 
 
 template<CharType T>
-void Interpreter<T>::visit(FunctionDefinition<T> &instr){
+void Interpreter<T>::visit(const FunctionDefinition<T> &instr){
     auto &block = instr.get_block();
     if(block){
         current_value = {};
@@ -120,7 +120,7 @@ void Interpreter<T>::visit(FunctionDefinition<T> &instr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(ReturnInstruction<T> &instr){
+void Interpreter<T>::visit(const ReturnInstruction<T> &instr){
     if(auto &expr = instr.get_expression()){
         expr->accept(*this);
     }
@@ -131,7 +131,7 @@ void Interpreter<T>::visit(ReturnInstruction<T> &instr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(AssignmentInstruction<T> &instr){
+void Interpreter<T>::visit(const AssignmentInstruction<T> &instr){
     auto &name = instr.get_name();
     auto var = get_variable_from_current_context(name);
     current_variable = var;
@@ -151,7 +151,7 @@ void Interpreter<T>::visit(AssignmentInstruction<T> &instr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(VarDefinitionInstruction<T> &instr){
+void Interpreter<T>::visit(const VarDefinitionInstruction<T> &instr){
     auto &name = instr.get_name();
     if(instr.get_type()->get_type() == Type::Void){
         throw VoidVariableException<T>(name, instr.get_position());
@@ -167,7 +167,7 @@ void Interpreter<T>::visit(VarDefinitionInstruction<T> &instr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(IfInstruction<T> &instr){
+void Interpreter<T>::visit(const IfInstruction<T> &instr){
     if(!instr.get_condition()){
         if(instr.get_code_block()){
             execute_block(*instr.get_code_block());
@@ -193,7 +193,7 @@ void Interpreter<T>::visit(IfInstruction<T> &instr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(WhileInstruction<T> &instr){
+void Interpreter<T>::visit(const WhileInstruction<T> &instr){
     if(!instr.get_condition()){
         throw NoConditionException<T>("while", instr.get_position());
     }
@@ -217,7 +217,7 @@ void Interpreter<T>::visit(WhileInstruction<T> &instr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(SingleArgExpression<T> &expr){
+void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
     auto expr_type = expr.get_expression_type();
     if(expr_type == ExpressionType::UnderscoreExpression){
         if(match_flag){
@@ -250,16 +250,16 @@ void Interpreter<T>::visit(SingleArgExpression<T> &expr){
         }
         return;
     }
-    if(is_expression_match(expr_type)){
-        auto new_expression_type = map_from_match(expr_type);
-        TwoArgExpression<T> new_expr{new_expression_type, nullptr, std::move(expr.get_expression()), expr.get_position()};
-        new_expr.accept(*this); //TODO hacky?
-    }
 }
 
 template<CharType T>
-void Interpreter<T>::visit(TwoArgExpression<T> &expr){
-    auto expr_type = expr.get_expression_type();
+void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
+    const auto expr_type = [this](const auto type){
+        if(this->is_expression_match(type))
+            return this->map_from_match(type);
+        return type;
+    }(expr.get_expression_type());
+
     value_t<T> left_value{};
     if(match_flag && !(expr.get_left_expression())){
         left_value = get_current_match_argument();
@@ -354,12 +354,12 @@ void Interpreter<T>::visit(TwoArgExpression<T> &expr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(LiteralExpression<T> &expr){
+void Interpreter<T>::visit(const LiteralExpression<T> &expr){
     current_value = expr.get_value();
 }
 
 template<CharType T>
-void Interpreter<T>::visit(IdentifierExpression<T> &expr){
+void Interpreter<T>::visit(const IdentifierExpression<T> &expr){
     const auto &name = expr.get_value();
     if(name == "EOF_MARKER"){   //no global variables :(
         current_value = "\x03";
@@ -404,7 +404,7 @@ void Interpreter<T>::visit(IdentifierExpression<T> &expr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(FunctionCall<T> &expr){
+void Interpreter<T>::visit(const FunctionCall<T> &expr){
 
     const recursion_level_guard guard{current_recursion_level};
 
@@ -453,7 +453,7 @@ void Interpreter<T>::visit(FunctionCall<T> &expr){
 }
 
 template<CharType T>
-void Interpreter<T>::visit(MatchOperation<T> &instr){
+void Interpreter<T>::visit(const MatchOperation<T> &instr){
     auto &arguments = instr.get_arguments();
     if(!arguments){
         throw NullpointerException<T>();
@@ -864,7 +864,7 @@ bool Interpreter<T>::is_expression_match(ExpressionType type) const{
 }
 
 template<CharType T>
-ExpressionType Interpreter<T>::map_from_match(ExpressionType type) const {
+ExpressionType Interpreter<T>::map_from_match(const ExpressionType type) {
     return match_expression_type_map.at(type);
 }
 

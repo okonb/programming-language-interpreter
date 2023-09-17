@@ -242,20 +242,20 @@ public:
     Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args);
     ~Interpreter() override = default;
     int64_t run(const std::basic_string<T> &to_start_name = "main");
-    void visit(FunctionDefinition<T> &instr) override;
-    void visit(ReturnInstruction<T> &instr) override;
-    void visit(AssignmentInstruction<T> &instr) override;
-    void visit(VarDefinitionInstruction<T> &instr) override;
-    void visit(IfInstruction<T> &instr) override;
-    void visit(WhileInstruction<T> &instr) override;
+    void visit(const FunctionDefinition<T> &instr) override;
+    void visit(const ReturnInstruction<T> &instr) override;
+    void visit(const AssignmentInstruction<T> &instr) override;
+    void visit(const VarDefinitionInstruction<T> &instr) override;
+    void visit(const IfInstruction<T> &instr) override;
+    void visit(const WhileInstruction<T> &instr) override;
 
-    void visit(SingleArgExpression<T> &expr) override;
-    void visit(TwoArgExpression<T> &expr) override;
-    void visit(LiteralExpression<T> &expr) override;
-    void visit(IdentifierExpression<T> &expr) override;
-    void visit(FunctionCall<T> &expr) override;
-    
-    void visit(MatchOperation<T> &instr) override;
+    void visit(const SingleArgExpression<T> &expr) override;
+    void visit(const TwoArgExpression<T> &expr) override;
+    void visit(const LiteralExpression<T> &expr) override;
+    void visit(const IdentifierExpression<T> &expr) override;
+    void visit(const FunctionCall<T> &expr) override;
+
+    void visit(const MatchOperation<T> &instr) override;
 private:
     std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
     value_t<T> current_value;
@@ -308,8 +308,8 @@ private:
     void increment_current_match_index();
     std::vector<value_t<T>> &get_current_match_arguments();
     bool is_expression_match(ExpressionType type) const;
-    ExpressionType map_from_match(ExpressionType type) const;
     value_t<T> get_current_match_argument();
+    static ExpressionType map_from_match(const ExpressionType type);
     const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
     class recursion_level_guard{

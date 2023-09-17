@@ -28,7 +28,7 @@ public:
     const std::unique_ptr<std::vector<std::unique_ptr<IInstruction<T>>>> &get_block() const {return block;}
     const Position &get_position() const {return position;}
     
-    void accept(IVisitor<T> &visitor) override { visitor.visit(*this); }
+    void accept(IVisitor<T> &visitor) const override { visitor.visit(*this); }
 private:
     std::basic_string<T> name;
     std::unique_ptr<TypeIdentifier<T>> type;
