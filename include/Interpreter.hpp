@@ -224,11 +224,13 @@ template<CharType T>
 class Context{
 public:
     Context() : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back({});}
-    Context(Scope<T> &scp) : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back(scp);}
+    Context(Scope<T> &&scp) : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back(std::move(scp));}
     std::vector<Scope<T>> &get_scopes() {return scopes;}
+    const std::vector<Scope<T>> &get_scopes() const {return scopes;}
     size_t get_match_index() const {return current_match_index;}
-    void set_match_index(size_t i) {current_match_index = i;}
+    void set_match_index(const size_t i) {current_match_index = i;}
     std::vector<value_t<T>> &get_match_arguments() {return current_match_arguments;}
+    const std::vector<value_t<T>> &get_match_arguments() const {return current_match_arguments;}
 private:
     std::vector<Scope<T>> scopes;
     size_t current_match_index;
@@ -267,10 +269,10 @@ private:
     std::map<std::basic_string<T>, std::basic_fstream<T>> open_files;
     size_t current_recursion_level;
     const size_t MAX_RECURSION_LEVEL;
-    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, Type ret_type, bool ret_const,    //TODO change to string_view?
+    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, const Type ret_type, const bool ret_const,    //TODO change to string_view?
                                                 const std::initializer_list<std::basic_string<T>> &p_names,
                                                 const std::initializer_list<Type> &p_types,
-                                                const std::initializer_list<bool> &p_consts);
+                                                const std::initializer_list<bool> &p_consts) const;
     std::unique_ptr<FunctionDefinition<T>> &get_function(const std::basic_string<T> &name);
     std::shared_ptr<Variable<T>> get_variable_from_current_context(const std::basic_string<T> &name);
     bool is_function_pointer_valid(const std::unique_ptr<FunctionDefinition<T>> & ptr);
@@ -284,32 +286,36 @@ private:
     bool is_current_value_float();
     bool is_current_value_string();
     */
-    bool is_current_value_of_type(Type type);
-    bool is_variable_name_in_current_scope(const std::basic_string<T> &name);
-    bool is_variable_name_in_current_context(const std::basic_string<T> &name);
-    bool is_argument_of_right_type(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
+    bool is_current_value_of_type(const Type type) const;
+    bool is_variable_name_in_current_scope(const std::basic_string<T> &name) const;
+    bool is_variable_name_in_current_context(const std::basic_string<T> &name) const;
+    bool is_argument_of_right_type(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t) const;
     bool is_argument_a_file(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
-    bool is_recursion_level_exceeded();
-    void push_context(Context<T> context);
+    bool is_recursion_level_exceeded() const;
+    void push_context(Context<T> &&context);
     void pop_context();
     void push_scope();
     void pop_scope();
-    void execute_block(std::vector<std::unique_ptr<IInstruction<T>>> &block);
+    void execute_block(const std::vector<std::unique_ptr<IInstruction<T>>> &block);
     void add_builtins();
     void run_builtin(const std::basic_string<T> &name);
     void add_variable(const std::basic_string<T> &name, const TypeIdentifier<T> &type);
 
-    Type get_value_type(const value_t<T> &v);
-    Type get_current_value_type();
+    Type get_value_type(const value_t<T> &v) const;
+    Type get_current_value_type() const;
     Scope<T> &get_current_scope();
     Context<T> &get_current_context();
-    size_t get_current_match_index();
-    void set_current_match_index(size_t i);
+    const Scope<T> &get_current_scope() const;
+    const Context<T> &get_current_context() const;
+    size_t get_current_match_index() const;
+    void set_current_match_index(const size_t i);
     void increment_current_match_index();
     std::vector<value_t<T>> &get_current_match_arguments();
-    bool is_expression_match(ExpressionType type) const;
-    value_t<T> get_current_match_argument();
+    const std::vector<value_t<T>> &get_current_match_arguments() const;
+    bool is_expression_match(const ExpressionType type) const;
+    const value_t<T> &get_current_match_argument() const;
     static ExpressionType map_from_match(const ExpressionType type);
+    
     const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
     class recursion_level_guard{

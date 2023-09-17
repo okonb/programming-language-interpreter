@@ -33,7 +33,7 @@ public:
         }
 
         for(auto &function : *functions){
-            auto name = function->get_name();
+            const auto name = function->get_name();
             if(function_definitions->contains(name)){
                 throw ProgramInitializationError<T>("Double function definition!", name);
             }

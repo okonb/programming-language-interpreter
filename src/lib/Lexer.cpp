@@ -314,7 +314,7 @@ std::optional<Token<T>> Lexer<T>::try_build_identifier_or_keyword(){
     while(advance_character() && (is_current_alnum() || is_current_underscore())){
         s << current_symbol;
     }
-    if(auto iter = keyword_lookup.find(s.str()); iter != keyword_lookup.cend()){
+    if(const auto iter = keyword_lookup.find(s.str()); iter != keyword_lookup.cend()){
         if(iter->second == TokenType::True || iter->second == TokenType::False){
             return Token<T>(TokenType::Boolean_literal, start_position, iter->second == TokenType::True);
         }
@@ -346,7 +346,7 @@ std::optional<Token<T>> Lexer<T>::try_build_string(){
             if(!advance_character()){
                 throw TokenizationError<T>("Error when building string literal - ETX.", current_position);
             }
-            if(auto iter = escapes.find(current_symbol); iter != escapes.cend()){
+            if(const auto iter = escapes.find(current_symbol); iter != escapes.cend()){
                 s << iter->second;
             }
             else{

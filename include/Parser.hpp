@@ -13,6 +13,7 @@
 #include <vector>
 #include <initializer_list>
 #include <source_location>
+#include <optional>
 
 
 template<CharType T>
@@ -83,6 +84,8 @@ public:
     std::unique_ptr<IExpression<T>> try_parse_pattern_element();
     std::unique_ptr<IExpression<T>> try_parse_condition();
 
+    const std::optional<ExpressionType> try_parse_current_unary_expression_type();
+
     bool is_current_token_of_type(TokenType type) const;
     bool is_current_token_a_type() const;
     bool is_current_token_additive_operator() const;
@@ -97,7 +100,7 @@ public:
     void expect_and_advance(TokenType type, const std::source_location &location = std::source_location::current());
     template<typename P>
     void expect_not_null(std::unique_ptr<P> &pointer, const std::basic_string_view<T> err_message, const std::source_location &location = std::source_location::current()) const;
-    
+
     UnexpectedTokenException<T> get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location = std::source_location::current()) const;
     SyntaxErrorException<T> get_syntax_error_exception(const std::basic_string_view<T> text, const std::source_location &location = std::source_location::current()) const;
     

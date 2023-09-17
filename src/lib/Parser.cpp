@@ -313,8 +313,8 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_else_block(){
     if(!check_and_advance(TokenType::Else_keywd)){
         return nullptr;
     }
-    if(auto if_st = try_parse_if_block()){
-        return if_st;
+    if(auto if_statement = try_parse_if_block()){
+        return if_statement;
     }
     auto code_block = try_parse_code_block();
     expect_not_null(code_block, "code_block");
@@ -452,13 +452,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_factor(){
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_term(){
     const auto start_position = get_current_position();
-    std::optional<ExpressionType> unary_expr_type{};
-    if(check_and_advance(TokenType::Not)){
-        unary_expr_type = ExpressionType::NotExpression;
-    }
-    else if(check_and_advance(TokenType::Minus)){
-        unary_expr_type = ExpressionType::NegateNumberExpression;
-    }
+    const auto unary_expr_type = try_parse_current_unary_expression_type();
 
     std::unique_ptr<IExpression<T>> term{nullptr};
     
@@ -580,13 +574,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_factor(){
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
     const auto start_position = get_current_position();
-    std::optional<ExpressionType> unary_expr_type{};
-    if(check_and_advance(TokenType::Not)){
-        unary_expr_type = ExpressionType::MatchNotExpression;
-    }
-    else if(check_and_advance(TokenType::Minus)){
-        unary_expr_type = ExpressionType::MatchNegateNumberExpression;
-    }
+    const auto unary_expr_type = try_parse_current_unary_expression_type();
     
     std::unique_ptr<IExpression<T>> term = nullptr;
     
@@ -603,7 +591,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_term(){
 
     if(unary_expr_type){
         if(term){
-            term = std::make_unique<SingleArgExpression<T>>(*unary_expr_type, std::move(term), start_position);
+            term = std::make_unique<SingleArgExpression<T>>(map_to_match(*unary_expr_type), std::move(term), start_position);
         }
         else{
             throw get_syntax_error_exception("match_term");
@@ -756,9 +744,20 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
     return nullptr;
 }
 
+template <CharType T>
+const std::optional<ExpressionType> ParserBase<T>::try_parse_current_unary_expression_type(){
+    if(check_and_advance(TokenType::Not)){
+        return ExpressionType::NotExpression;
+    }
+    if(check_and_advance(TokenType::Minus)){
+        return ExpressionType::NegateNumberExpression;
+    }
+    return std::nullopt;
+}
 
-template<CharType T>
-UnexpectedTokenException<T> ParserBase<T>::get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location) const {
+template <CharType T>
+UnexpectedTokenException<T> ParserBase<T>::get_unexpected_token_exception(const std::initializer_list<TokenType> &types, const std::source_location &location) const
+{
     return UnexpectedTokenException<T>(location.function_name(), current_token, types);
 }
 

@@ -19,7 +19,7 @@ private:
 public:
     constexpr explicit light_map(std::array<std::pair<Key, Value>, Size> arr) noexcept : data{arr} {}
     [[nodiscard]]
-    const Value &at(const Key &key) const{
+    constexpr const Value &at(const Key &key) const{
         const auto result = find(key);
         if(result == data.cend()){
             throw std::runtime_error{"light_map::at() lookup failed"};
@@ -28,20 +28,20 @@ public:
         return result->second;
     }
     [[nodiscard]]
-    const typename decltype(data)::const_iterator find(const Key &key) const noexcept{
+    constexpr const typename decltype(data)::const_iterator find(const Key &key) const noexcept{
         const auto result = std::find_if(this->data.cbegin(), this->data.cend(), [&key](const auto &entry){return entry.first == key;});
         return result;
     }
     [[nodiscard]]
-    bool contains(const Key &key) const noexcept{
+    constexpr bool contains(const Key &key) const noexcept{
         return find(key) != this->data.cend();
     }
     [[nodiscard]]
-    const typename decltype(data)::const_iterator cbegin() const noexcept{
+    constexpr const typename decltype(data)::const_iterator cbegin() const noexcept{
         return data.cbegin();
     }
     [[nodiscard]]
-    const typename decltype(data)::const_iterator cend() const noexcept{
+    constexpr const typename decltype(data)::const_iterator cend() const noexcept{
         return data.cend();
     }
 };
