@@ -94,9 +94,9 @@ Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream
 template<CharType T>
 int64_t Interpreter<T>::run(const std::basic_string<T> &to_start_name){
     FunctionCall<T> funcall{to_start_name, std::make_unique<std::vector<std::unique_ptr<IExpression<T>>>>(), Position()};
+
     funcall.accept(*this);
-    const auto *return_value_ptr = std::get_if<int64_t>(&current_value);
-    if(return_value_ptr){
+    if(const auto *return_value_ptr = std::get_if<int64_t>(&current_value)){
         return *return_value_ptr;
     }
     return -1;
@@ -113,8 +113,14 @@ void Interpreter<T>::visit(const FunctionDefinition<T> &instr){
     else{
         run_builtin(instr.get_name());
     }
-    if(return_flag && !is_current_value_of_type(instr.get_type()->get_type())){
-        throw ReturnValueTypeMismatchException<T>(instr.get_name(), *instr.get_type(), get_current_value_type(), instr.get_position());
+    if(return_flag){
+        const auto &return_type_ptr = instr.get_return_type();
+        if(!return_type_ptr){
+            throw NullpointerException<T>{};
+        }
+        if(!is_current_value_of_type(return_type_ptr->get_type())){
+            throw ReturnValueTypeMismatchException<T>(instr.get_name(), *instr.get_return_type(), get_current_value_type(), instr.get_position());
+        }
     }
 }
 
@@ -132,49 +138,56 @@ void Interpreter<T>::visit(const ReturnInstruction<T> &instr){
 template<CharType T>
 void Interpreter<T>::visit(const AssignmentInstruction<T> &instr){
     const auto &name = instr.get_name();
-    const auto var = get_variable_from_current_context(name);
-    current_variable = var;
-    if(!var){
+    const auto variable_ptr = get_variable_from_current_context(name);
+    //current_variable = var;
+    if(!variable_ptr){
         throw VariableNotDeclaredException<T>(name, instr.get_position());
     }
-    if(var->is_const()){
+    const auto &variable_type = variable_ptr->get_type();
+    if(variable_type.get_is_const()){
         throw ConstVariableAssignmentException<T>(name, instr.get_position());
     }
     
     instr.get_expression()->accept(*this);
 
-    if(!is_current_value_of_type(var->get_type().get_type())){
-        throw VariableAssignmentTypeMismatchException<T>(name, var->get_type(), get_current_value_type(), instr.get_position());
+    if(!is_current_value_of_type(variable_type.get_type())){
+        throw VariableAssignmentTypeMismatchException<T>(name, variable_type, get_current_value_type(), instr.get_position());
     }
-    var->set_value(current_value);
+    variable_ptr->set_value(current_value);
 }
 
 template<CharType T>
 void Interpreter<T>::visit(const VarDefinitionInstruction<T> &instr){
     const auto &name = instr.get_name();
-    if(instr.get_type()->get_type() == Type::Void){
+    const auto &variable_type_ptr = instr.get_type();
+    if(!variable_type_ptr){
+        throw NullpointerException<T>{};
+    }
+    if(variable_type_ptr->get_type() == Type::Void){
         throw VoidVariableException<T>(name, instr.get_position());
     }
     if(is_variable_name_in_current_scope(name)){
         throw VariableRedefinitionException<T>(name, instr.get_position());
     }
     instr.get_expression()->accept(*this);
-    if(!is_current_value_of_type(instr.get_type()->get_type())){
-        throw VariableAssignmentTypeMismatchException<T>(name, *instr.get_type(), get_current_value_type(), instr.get_position());
+    if(!is_current_value_of_type(variable_type_ptr->get_type())){
+        throw VariableAssignmentTypeMismatchException<T>(name, *variable_type_ptr, get_current_value_type(), instr.get_position());
     }
-    add_variable(name, *instr.get_type());
+    add_variable(name, *variable_type_ptr);
 }
 
 template<CharType T>
 void Interpreter<T>::visit(const IfInstruction<T> &instr){
-    if(!instr.get_condition()){
-        if(instr.get_code_block()){
-            execute_block(*instr.get_code_block());
+    const auto &condition_expr_ptr = instr.get_condition();
+    const auto &code_block_ptr = instr.get_code_block();
+    if(!condition_expr_ptr){
+        if(code_block_ptr){ //else
+            execute_block(*code_block_ptr);
             return;
         }
         throw NoConditionException<T>("if", instr.get_position());
     }
-    instr.get_condition()->accept(*this);
+    condition_expr_ptr->accept(*this);
 
     const auto *condition_ptr = std::get_if<bool>(&current_value);
     if(!condition_ptr){
@@ -182,21 +195,26 @@ void Interpreter<T>::visit(const IfInstruction<T> &instr){
     }
     
     if(*condition_ptr){
-        execute_block(*instr.get_code_block());
+        if(!code_block_ptr){
+            throw NullpointerException<T>{};
+        }
+        execute_block(*code_block_ptr);
     }
     else{
-        if(instr.get_else_block()){
-            instr.get_else_block()->accept(*this);
+        if(const auto &else_block_ptr = instr.get_else_block()){
+            else_block_ptr->accept(*this);
         }
     }
 }
 
 template<CharType T>
 void Interpreter<T>::visit(const WhileInstruction<T> &instr){
-    if(!instr.get_condition()){
+    const auto &condition_expr_ptr = instr.get_condition();
+    const auto &code_block_ptr = instr.get_code_block();
+    if(!condition_expr_ptr){
         throw NoConditionException<T>("while", instr.get_position());
     }
-    instr.get_condition()->accept(*this);
+    condition_expr_ptr->accept(*this);
 
     const auto *condition_ptr = std::get_if<bool>(&current_value);
 
@@ -204,13 +222,12 @@ void Interpreter<T>::visit(const WhileInstruction<T> &instr){
         throw NonBooleanConditionException<T>("while", instr.get_position());
     }
     
-    
     while(*condition_ptr){
-        execute_block(*instr.get_code_block());
+        execute_block(*code_block_ptr);
         if(return_flag){
             return;
         }
-        instr.get_condition()->accept(*this);
+        condition_expr_ptr->accept(*this);
         condition_ptr = std::get_if<bool>(&current_value);
     }
 }
@@ -225,7 +242,13 @@ void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
         }
         throw UnderscoreOutsideMatchException<T>(expr.get_position());
     }
-    expr.get_expression()->accept(*this);
+    if(const auto &expression_ptr = expr.get_expression()){
+        expression_ptr->accept(*this);
+    }
+    else{
+        throw NullpointerException<T>{};
+    }
+
     if(expr_type == ExpressionType::NegateNumberExpression || expr_type == ExpressionType::MatchNegateNumberExpression){
         current_value = std::visit(overload{
             [](NumericType auto v)  -> value_t<T> { return -v; },
@@ -260,11 +283,11 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
     }(expr.get_expression_type());
 
     value_t<T> left_value{};
-    if(match_flag && !(expr.get_left_expression())){
+    if(const auto &left_expression_ptr = expr.get_left_expression(); match_flag && !left_expression_ptr){
         left_value = get_current_match_argument();
     }
-    else if(expr.get_left_expression()){
-        expr.get_left_expression()->accept(*this);
+    else if(left_expression_ptr){
+        left_expression_ptr->accept(*this);
         left_value = current_value;
     }
     else{
@@ -279,7 +302,13 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
             current_value = false;
             return;
         }
-        expr.get_right_expression()->accept(*this);
+        if(const auto &right_expression_ptr = expr.get_right_expression()){
+            right_expression_ptr->accept(*this);
+        }
+        else{
+            throw NullpointerException<T>{};
+        }
+        
         const auto &right_value = current_value;
         const auto *right_value_bool_ptr = std::get_if<bool>(&right_value);
         if(!right_value_bool_ptr){
@@ -300,7 +329,12 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
             current_value = true;
             return;
         }
-        expr.get_right_expression()->accept(*this);
+        if(const auto &right_expression_ptr = expr.get_right_expression()){
+            right_expression_ptr->accept(*this);
+        }
+        else{
+            throw NullpointerException<T>{};
+        }
         const auto &right_value = current_value;
         const auto *right_value_bool_ptr = std::get_if<bool>(&right_value);
         if(!right_value_bool_ptr){
@@ -315,7 +349,12 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
         if(!left_value_int_ptr){
             throw OperatorArgumentMismatchException<T>(expr.get_string_repr(), {Type::Integer}, {Type::Integer}, {get_value_type(left_value)}, expr.get_position());
         }
-        expr.get_right_expression()->accept(*this);
+        if(const auto &right_expression_ptr = expr.get_right_expression()){
+            right_expression_ptr->accept(*this);
+        }
+        else{
+            throw NullpointerException<T>{};
+        }
         const auto &right_value = current_value;
         const auto *right_value_int_ptr = std::get_if<int64_t>(&right_value);
         if(!right_value_int_ptr){
@@ -329,7 +368,12 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
     }
 
 
-    expr.get_right_expression()->accept(*this);
+    if(const auto &right_expression_ptr = expr.get_right_expression()){
+        right_expression_ptr->accept(*this);
+    }
+    else{
+        throw NullpointerException<T>{};
+    }
     const auto &right_value = current_value;
 
     try{
@@ -364,41 +408,39 @@ void Interpreter<T>::visit(const IdentifierExpression<T> &expr){
         current_value = "\x03";
         return;
     }
-    const auto var = get_variable_from_current_context(name);
-    if(var){
-        current_value = var->get_value();
-        current_variable = var;
+    
+    if(const auto variable_ptr = get_variable_from_current_context(name)){
+        current_value = variable_ptr->get_value();
+        current_variable = variable_ptr;
+    }
+    else if(match_flag){
+        const auto &function = get_function(name);
+        if(!function){
+            throw FunctionNotDeclaredException<T>(name, expr.get_position());
+        }
+        const auto &parameters = function->get_parameters();
+        
+        if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){   //TODO wasn't it supposed to work a different way... 
+            throw InvalidPatternFunctionSignatureException<T>(expr.get_position());
+        }
+        std::vector<TypeIdentifier<T>> argument_types{};
+        const auto &argument = get_current_match_argument();
+        const auto argument_type = TypeIdentifier<T>(get_value_type(argument), true);
+        argument_types.push_back(argument_type);
+        if(!is_argument_of_right_type(*(*parameters)[0]->get_type(), argument_type)){
+            throw FunctionArgumentMismatchException<T>(name, {TypeIdentifier<T>(*(*parameters)[0]->get_type())}, argument_types, 1, expr.get_position());
+        }
+        
+        Scope<T> arguments_evaluated{};
+        arguments_evaluated.insert(std::make_pair((*parameters)[0]->get_name(), std::make_shared<Variable<T>>(argument, argument_type)));    
+        
+        push_context(Context<T>(std::move(arguments_evaluated)));
+        function->accept(*this);
+        pop_context();
+        return_flag = false;
     }
     else{
-        if(match_flag){
-            const auto &function = get_function(name);
-            if(!function){
-                throw FunctionNotDeclaredException<T>(name, expr.get_position());
-            }
-            const auto &parameters = function->get_parameters();
-           
-            if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){   //TODO wasn't it supposed to work a different way... 
-                throw InvalidPatternFunctionSignatureException<T>(expr.get_position());
-            }
-            std::vector<TypeIdentifier<T>> argument_types{};
-            const auto &argument = get_current_match_argument();
-            const auto argument_type = TypeIdentifier<T>(get_value_type(argument), true);
-            argument_types.push_back(argument_type);
-            Scope<T> arguments_evaluated{};
-            if(!is_argument_of_right_type(*(*parameters)[0]->get_type(), argument_type)){
-                throw FunctionArgumentMismatchException<T>(name, {TypeIdentifier<T>(*(*parameters)[0]->get_type())}, argument_types, 1, expr.get_position());
-            }
-            
-            arguments_evaluated.insert(std::make_pair((*parameters)[0]->get_name(), std::make_shared<Variable<T>>(argument, argument_type)));    
-            
-            push_context(Context<T>(std::move(arguments_evaluated)));
-            function->accept(*this);
-            pop_context();
-            return_flag = false;
-        }
-        else{
-            throw VariableNotDeclaredException<T>(name, expr.get_position());
-        }
+        throw VariableNotDeclaredException<T>(name, expr.get_position());
     }
 }
 
@@ -413,7 +455,6 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
         throw FunctionNotDeclaredException<T>(name, expr.get_position());
     }
 
-    
     if(is_recursion_level_exceeded()){
         throw RecursionLimitException<T>(current_recursion_level, name, expr.get_position());
     }

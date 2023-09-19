@@ -20,7 +20,7 @@ void ProgramTreePrinter<T>::visit(const FunctionDefinition<T> &instr)
     const auto guard = get_guard();
     print_spacing();
     const auto &name = instr.get_name();
-    const auto &type = instr.get_type();
+    const auto &type = instr.get_return_type();
     const auto &parameters = instr.get_parameters();
     const auto &block = instr.get_block();
     stream << "FunctionDefinition " << name << " : " << type->get_str_representation() << "\n";

@@ -844,8 +844,8 @@ TEST(ParserTest, Function_test1){
   auto fun_vect = parser.parse();
   auto program = Program<char>(std::move(fun_vect));
   ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_name(), "testowa");
-  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_type()->get_is_const(), false);
-  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_type()->get_type(), Type::Integer);
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_return_type()->get_is_const(), false);
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_return_type()->get_type(), Type::Integer);
   auto& param1 = program.get_function_definitions()->at("testowa")->get_parameters()->at(0);
   ASSERT_EQ(param1->get_name(), "param1");
   ASSERT_EQ(param1->get_type()->get_is_const(), true);

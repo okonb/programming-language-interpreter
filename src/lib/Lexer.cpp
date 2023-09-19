@@ -297,7 +297,7 @@ std::optional<Token<T>> Lexer<T>::try_build_number(){
         if(current_symbol == '.' || is_current_alpha() || is_current_underscore()){
             throw TokenizationError<T>("Error building number - wrong floating point literal format.", current_position);
         }
-        //ok because fractional part of double only needs 52 bits of precission; will add exponent later TODO 
+        //ok because the mantissa of a double only needs 52 bits of precission; will add exponent parsing later TODO 
         return Token<T>(TokenType::Floating_literal, start_position, static_cast<double>(integer_part) + static_cast<double>(decimal_part) / pow(number_base, decimal_places));
     }
     return Token<T>(TokenType::Integer_literal, start_position, integer_part);
