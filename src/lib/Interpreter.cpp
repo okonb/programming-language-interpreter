@@ -6,8 +6,9 @@
 // intentional conversion warning suppression to facilitate expected behaviour
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
-template<CharType T, NumericType P = int64_t, NumericType R = int64_t>  //TODO put in anonymous namespace
-class Resolver{
+namespace{
+template<CharType T, NumericType P = int64_t, NumericType R = int64_t>
+class OperatorResolver{
 public:
     inline const static light_map<ExpressionType, std::function<value_t<T>(P, R)>, 10UL> numeric_map{
         std::array<std::pair<ExpressionType, std::function<value_t<T>(P, R)>>, 10UL>{{
@@ -60,11 +61,18 @@ public:
     }
 };
 
+
+template class OperatorResolver<char, int64_t, int64_t>;
+template class OperatorResolver<char, int64_t, double>;
+template class OperatorResolver<char, double, int64_t>;
+template class OperatorResolver<char, double, double>;
+}
+
 #pragma GCC diagnostic pop
 
 /*
 template<CharType T, NumericType P, NumericType R>
-const std::map<ExpressionType, std::function<value_t<T>(P, R)>> Resolver<T, P, R>::numeric_map {
+const std::map<ExpressionType, std::function<value_t<T>(P, R)>> OperatorResolver<T, P, R>::numeric_map {
         {ExpressionType::PlusExpression,            [](P l, R r) -> value_t<T> {return l + r;}},
         {ExpressionType::MinusExpression,           [](P l, R r) -> value_t<T> {return l - r;}},
         {ExpressionType::MultiplicationExpression,  [](P l, R r) -> value_t<T> {return l * r;}},
@@ -82,11 +90,12 @@ const std::map<ExpressionType, std::function<value_t<T>(P, R)>> Resolver<T, P, R
 */
 
 template<CharType T>
-Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args) :
-    function_definitions{std::move(prog->give_function_definitions())},
-    current_value{}, return_flag{false}, match_flag{false}, function_stack{},
-    out_stream{o_stream}, program_arguments{args}, current_recursion_level{0UL},
-    MAX_RECURSION_LEVEL{100} /*TODO*/ {
+Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream,
+    const std::vector<std::basic_string<T>> &args, size_t max_recursion_depth) :
+        function_definitions{std::move(prog->give_function_definitions())},
+        current_value{}, returned_flag{false}, match_flag{false}, function_stack{},
+        out_stream{o_stream}, program_arguments{args}, current_recursion_level{0UL},
+        MAX_RECURSION_LEVEL{max_recursion_depth} {
         add_builtins();
     }
 
@@ -113,7 +122,7 @@ void Interpreter<T>::visit(const FunctionDefinition<T> &instr){
     else{
         run_builtin(instr.get_name());
     }
-    if(return_flag){
+    if(returned_flag){
         const auto &return_type_ptr = instr.get_return_type();
         if(!return_type_ptr){
             throw NullpointerException<T>{};
@@ -132,7 +141,7 @@ void Interpreter<T>::visit(const ReturnInstruction<T> &instr){
     else{
         current_value = {};
     }
-    return_flag = true;
+    returned_flag = true;
 }
 
 template<CharType T>
@@ -224,7 +233,7 @@ void Interpreter<T>::visit(const WhileInstruction<T> &instr){
     
     while(*condition_ptr){
         execute_block(*code_block_ptr);
-        if(return_flag){
+        if(returned_flag){
             return;
         }
         condition_expr_ptr->accept(*this);
@@ -234,7 +243,12 @@ void Interpreter<T>::visit(const WhileInstruction<T> &instr){
 
 template<CharType T>
 void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
-    const auto expr_type = expr.get_expression_type();
+    const auto expr_type = [this](const auto type){
+        if(const auto m_type = this->map_from_match(type))
+            return *m_type;
+        return type;
+    }(expr.get_expression_type());
+    
     if(expr_type == ExpressionType::UnderscoreExpression){
         if(match_flag){
             current_value = true;
@@ -249,7 +263,7 @@ void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
         throw NullpointerException<T>{};
     }
 
-    if(expr_type == ExpressionType::NegateNumberExpression || expr_type == ExpressionType::MatchNegateNumberExpression){
+    if(expr_type == ExpressionType::NegateNumberExpression){
         current_value = std::visit(overload{
             [](NumericType auto v)  -> value_t<T> { return -v; },
             [](auto)                -> value_t<T> { return {}; },
@@ -261,7 +275,7 @@ void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
         return;
     }
 
-    if(expr_type == ExpressionType::NotExpression || expr_type == ExpressionType::MatchNotExpression){
+    if(expr_type == ExpressionType::NotExpression){
         current_value = std::visit(overload{
             [](const bool v)    -> value_t<T> { return !v; },
             [](const auto &)    -> value_t<T> { return {}; },
@@ -277,8 +291,8 @@ void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
 template<CharType T>
 void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
     const auto expr_type = [this](const auto type){
-        if(this->is_expression_match(type))
-            return this->map_from_match(type);
+        if(const auto m_type = this->map_from_match(type))
+            return *m_type;
         return type;
     }(expr.get_expression_type());
 
@@ -378,9 +392,9 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
 
     try{
         current_value = std::visit(overload{
-            [&expr_type](NumericType auto l, NumericType auto r)                        {return Resolver<T, decltype(l), decltype(r)>::resolve_numeric(expr_type)(l, r);},
-            [&expr_type](const bool l, const bool r)                                    {return Resolver<T>::resolve_bool(expr_type)(l, r);},
-            [&expr_type](const std::basic_string<T> &l, const std::basic_string<T> &r)  {return Resolver<T>::resolve_string(expr_type)(l, r);},
+            [&expr_type](NumericType auto l, NumericType auto r)                        {return OperatorResolver<T, decltype(l), decltype(r)>::resolve_numeric(expr_type)(l, r);},
+            [&expr_type](const bool l, const bool r)                                    {return OperatorResolver<T>::resolve_bool(expr_type)(l, r);},
+            [&expr_type](const std::basic_string<T> &l, const std::basic_string<T> &r)  {return OperatorResolver<T>::resolve_string(expr_type)(l, r);},
             [](auto, auto)                                                              {return value_t<T>{};},
             },
             left_value, right_value);
@@ -420,7 +434,7 @@ void Interpreter<T>::visit(const IdentifierExpression<T> &expr){
         }
         const auto &parameters = function->get_parameters();
         
-        if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){   //TODO wasn't it supposed to work a different way... 
+        if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){
             throw InvalidPatternFunctionSignatureException<T>(expr.get_position());
         }
         std::vector<TypeIdentifier<T>> argument_types{};
@@ -437,7 +451,7 @@ void Interpreter<T>::visit(const IdentifierExpression<T> &expr){
         push_context(Context<T>(std::move(arguments_evaluated)));
         function->accept(*this);
         pop_context();
-        return_flag = false;
+        returned_flag = false;
     }
     else{
         throw VariableNotDeclaredException<T>(name, expr.get_position());
@@ -491,7 +505,7 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
     push_context(Context<T>(std::move(arguments_evaluated)));
     function->accept(*this);
     pop_context();
-    return_flag = false;
+    returned_flag = false;
 }
 
 template<CharType T>
@@ -590,57 +604,18 @@ std::shared_ptr<Variable<T>> Interpreter<T>::get_variable_from_current_context(c
     return nullptr;
 }
 
-/*
-template<CharType T>
-bool Interpreter<T>::is_value_bool(const value_t<T> &v){
-    return std::holds_alternative<bool>(v);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_value_int(const value_t<T> &v){
-    return std::holds_alternative<int64_t>(v);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_value_float(const value_t<T> &v){
-    return std::holds_alternative<double>(v);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_value_string(const value_t<T> &v){
-    return std::holds_alternative<std::basic_string<T>>(v);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_current_value_bool(){
-    return std::holds_alternative<bool>(current_value);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_current_value_int(){
-    return std::holds_alternative<int64_t>(current_value);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_current_value_float(){
-    return std::holds_alternative<double>(current_value);
-}
-
-template<CharType T>
-bool Interpreter<T>::is_current_value_string(){
-    return std::holds_alternative<std::basic_string<T>>(current_value);
-}
-*/
 template<CharType T>
 bool Interpreter<T>::is_current_value_of_type(const Type type) const {
-    return get_current_value_type() == type || (type == Type::File && get_current_value_type() == Type::String);
+    const auto current_value_type = get_current_value_type();
+    return current_value_type == type || (type == Type::File && current_value_type == Type::String);
 }
 
 
 template<CharType T>
 bool Interpreter<T>::is_variable_name_in_current_scope(const std::basic_string<T> &name) const{
-    const auto var = get_current_scope().find(name);
-    return var != get_current_scope().end();
+    const auto &current_scope = get_current_scope();
+    const auto var = current_scope.find(name);
+    return var != current_scope.cend();
 }
 
 
@@ -692,7 +667,7 @@ void Interpreter<T>::execute_block(const std::vector<std::unique_ptr<IInstructio
 
     for(const auto &instruction : block){
         instruction->accept(*this);
-        if(return_flag){
+        if(returned_flag){    //no need to pop scopes as we're throwing the whole call context out
             return;
         }
     }
@@ -703,7 +678,7 @@ void Interpreter<T>::execute_block(const std::vector<std::unique_ptr<IInstructio
 
 template<CharType T>
 void Interpreter<T>::add_builtins(){
-    std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>> builtins{};  //TODO??
+    std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>> builtins{};
     builtins.insert(std::make_pair("print", get_f_d("print", Type::Void, false,
         {"text"},
         {Type::String},
@@ -762,31 +737,31 @@ void Interpreter<T>::add_builtins(){
 
 template<CharType T>
 void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
-    const static std::map<std::basic_string_view<T>, std::function<void(void)>> lambda_map{ //TODO
+    const static std::map<std::basic_string_view<T>, std::function<void(void)>> lambda_map{
         {"print",   [&](void) -> void {std::visit(overload{
-                        [&](std::monostate) -> void {this->out_stream << "None";},  //TODO: what
+                        [&](std::monostate) -> void {this->out_stream << "None";},
                         [&](auto arg)       -> void {this->out_stream << arg;}
-        }, get_variable_from_current_context("text")->get_value()); return_flag = false;}},
+        }, get_variable_from_current_context("text")->get_value()); returned_flag = false;}},
         {"to_str_int",  [&](void) -> void {std::visit(overload{
                             [&](int64_t arg)    -> void {current_value = std::to_string(arg);},
                             [&](auto)           -> void {current_value = {};}
-        }, get_variable_from_current_context("int_v")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("int_v")->get_value()); returned_flag = true;}},
         {"to_str_float",    [&](void) -> void {std::visit(overload{
                                 [&](double arg)     -> void {current_value = std::to_string(arg);},
                                 [&](auto)           -> void {current_value = {};}
-        }, get_variable_from_current_context("float_v")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("float_v")->get_value()); returned_flag = true;}},
         {"to_str_bool", [&](void) -> void {std::visit(overload{
                             [&](bool arg)   -> void {current_value = arg ? "true" : "false";},
                             [&](auto)       -> void {current_value = {};}
-        }, get_variable_from_current_context("bool_v")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("bool_v")->get_value()); returned_flag = true;}},
         {"to_int_float",    [&](void) -> void {std::visit(overload{
                                 [&](double arg) -> void {current_value = static_cast<int64_t>(arg);},
                                 [&](auto)       -> void {current_value = {};}
-        }, get_variable_from_current_context("float_v")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("float_v")->get_value()); returned_flag = true;}},
         {"to_float_int",    [&](void) -> void {std::visit(overload{
                                 [&](int64_t arg)    -> void {current_value = static_cast<double>(arg);},
                                 [&](auto)           -> void {current_value = {};}
-        }, get_variable_from_current_context("int_v")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("int_v")->get_value()); returned_flag = true;}},
         {"open_file",   [&](void) -> void {std::visit(overload{
                             [&](const std::basic_string<T> &arg)   -> void {   if(!open_files.contains(arg)){
                                                                             open_files.insert(std::make_pair(arg, std::fstream{arg}));
@@ -794,28 +769,28 @@ void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
                                                                         current_value = arg;
                                                                     },
                             [&](auto)                       -> void {current_value = {};}  
-        }, get_variable_from_current_context("name")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("name")->get_value()); returned_flag = true;}},
         {"bad_file",    [&](void) -> void {std::visit(overload{
                             [&](const std::basic_string<T> &arg)   -> void {current_value = !bool(open_files.at(arg)); },
                             [&](auto)                       -> void {current_value = {};}
-        }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("handle")->get_value()); returned_flag = true;}},
         {"read_line",   [&](void) -> void {std::visit(overload{
                             [&](const std::basic_string<T> &arg)   -> void {std::basic_string<T> tmp{};
                                                                     current_value = std::getline(open_files.at(arg), tmp) ? tmp : "\x03";},
                             [&](auto)                       -> void {current_value = {};}
-        }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("handle")->get_value()); returned_flag = true;}},
         {"close_file",  [&](void) -> void {std::visit(overload{
                             [&](const std::basic_string<T> &arg)   -> void {open_files.erase(arg);
                                                                     current_value = true; },
                             [&](auto)                       -> void {current_value = {};}
-        }, get_variable_from_current_context("handle")->get_value()); return_flag = true;}},
-        {"arguments_number",    [&](void) -> void {current_value = int64_t(program_arguments.size()); return_flag = true;}},
+        }, get_variable_from_current_context("handle")->get_value()); returned_flag = true;}},
+        {"arguments_number",    [&](void) -> void {current_value = int64_t(program_arguments.size()); returned_flag = true;}},
         {"argument",    [&](void) -> void {std::visit(overload{
                             [&](int64_t index)  -> void {const auto uindex = static_cast<size_t>(index);
                                                         if(uindex >= program_arguments.size()){throw std::runtime_error{"Index out of bounds."};}
                                                         current_value = program_arguments[uindex]; },
                             [&](auto)           -> void {current_value = {};}
-        }, get_variable_from_current_context("num")->get_value()); return_flag = true;}},
+        }, get_variable_from_current_context("num")->get_value()); returned_flag = true;}},
     };
     const auto function = lambda_map.find(name);
     if(function == lambda_map.end()){
@@ -827,8 +802,8 @@ void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
 
 
 template<CharType T>
-std::unique_ptr<FunctionDefinition<T>> Interpreter<T>::get_f_d( const std::basic_string<T> &name, const Type ret_type, const bool ret_const,
-                                                const std::initializer_list<std::basic_string<T>> &p_names, //TODO memory copying...
+std::unique_ptr<FunctionDefinition<T>> Interpreter<T>::get_f_d(const std::basic_string_view<T> name, const Type ret_type, const bool ret_const,
+                                                const std::initializer_list<std::basic_string_view<T>> p_names,
                                                 const std::initializer_list<Type> &p_types,
                                                 const std::initializer_list<bool> &p_consts) const{
 
@@ -865,26 +840,26 @@ Type Interpreter<T>::get_current_value_type() const{
 
 template<CharType T>
 Scope<T> &Interpreter<T>::get_current_scope(){
-    auto ptr = get_current_context().get_scopes().rbegin();
-    if(ptr == get_current_context().get_scopes().rend()){
-        throw std::runtime_error("No scope created.");
+    auto &current_scopes = get_current_context().get_scopes();
+    if(const auto ptr = current_scopes.rbegin(); ptr != current_scopes.rend()){
+        return *ptr;
     }
-    return *ptr;
+    throw std::runtime_error("No scope created.");
 }
 
 template<CharType T>
 const Scope<T> &Interpreter<T>::get_current_scope() const{
-    const auto ptr = get_current_context().get_scopes().rbegin();
-    if(ptr == get_current_context().get_scopes().rend()){
-        throw std::runtime_error("No scope created.");
+    const auto &current_scopes = get_current_context().get_scopes();
+    if(const auto ptr = current_scopes.crbegin(); ptr != current_scopes.crend()){
+        return *ptr;
     }
-    return *ptr;
+    throw std::runtime_error("No scope created.");
 }
 
 
 template<CharType T>
 Context<T> &Interpreter<T>::get_current_context(){
-    auto ptr = function_stack.rbegin();
+    const auto ptr = function_stack.rbegin();
     if(ptr == function_stack.rend()){
         throw std::runtime_error("No context created.");
     }
@@ -893,8 +868,8 @@ Context<T> &Interpreter<T>::get_current_context(){
 
 template<CharType T>
 const Context<T> &Interpreter<T>::get_current_context() const{
-    const auto ptr = function_stack.rbegin();
-    if(ptr == function_stack.rend()){
+    const auto ptr = function_stack.crbegin();
+    if(ptr == function_stack.crend()){
         throw std::runtime_error("No context created.");
     }
     return *ptr;
@@ -926,13 +901,11 @@ const std::vector<value_t<T>> &Interpreter<T>::get_current_match_arguments() con
 }
 
 template<CharType T>
-bool Interpreter<T>::is_expression_match(const ExpressionType type) const{
-    return match_expression_type_map.find(type) != match_expression_type_map.cend();
-}
-
-template<CharType T>
-ExpressionType Interpreter<T>::map_from_match(const ExpressionType type) {
-    return match_expression_type_map.at(type);
+std::optional<ExpressionType> Interpreter<T>::map_from_match(const ExpressionType type) {
+    if(const auto ptr = match_expression_type_map.find(type); ptr != match_expression_type_map.cend()){
+        return ptr->second;
+    }
+    return std::nullopt;
 }
 
 template<CharType T>
@@ -964,7 +937,3 @@ constexpr light_map<ExpressionType, ExpressionType, 14UL> Interpreter<T>::match_
 
 
 template class Interpreter<char>;
-template class Resolver<char, int64_t, int64_t>;
-template class Resolver<char, int64_t, double>;
-template class Resolver<char, double, int64_t>;
-template class Resolver<char, double, double>;

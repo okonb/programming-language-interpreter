@@ -11,7 +11,6 @@ template<CharType T>
 class ProgramTreePrinter : public IVisitor<T>{
 public:
     ProgramTreePrinter(std::basic_ostream<T> &s) : stream{s}, level{0} {}
-    ~ProgramTreePrinter() override = default;
 
     void print_program(const Program<T> &program);
 

@@ -9,7 +9,6 @@ template<CharType T = char>
 class IInstruction : public IVisitable<T>{
 public:
     IInstruction(const Position &pos) : position{pos} {}
-    ~IInstruction() override = default;
     const Position &get_position() const {return position;}
 private:
     Position position;

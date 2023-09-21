@@ -15,6 +15,7 @@
 #include <map>
 #include <variant>
 #include <fstream>
+#include <optional>
 
 
 template<CharType T>
@@ -241,8 +242,8 @@ private:
 template<CharType T>
 class Interpreter : public IVisitor<T>{
 public:
-    Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args);
-    ~Interpreter() override = default;
+    Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream,
+        const std::vector<std::basic_string<T>> &args, size_t max_recursion_depth = 100UL);
     int64_t run(const std::basic_string<T> &to_start_name = "main");
     void visit(const FunctionDefinition<T> &instr) override;
     void visit(const ReturnInstruction<T> &instr) override;
@@ -262,30 +263,19 @@ private:
     std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
     value_t<T> current_value;
     std::shared_ptr<Variable<T>> current_variable;
-    bool return_flag, match_flag;
+    bool returned_flag, match_flag;
     std::vector<Context<T>> function_stack;
     std::basic_ostream<T> &out_stream;
     const std::vector<std::basic_string<T>> program_arguments;
     std::map<std::basic_string<T>, std::basic_fstream<T>> open_files;
     size_t current_recursion_level;
     const size_t MAX_RECURSION_LEVEL;
-    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, const Type ret_type, const bool ret_const,    //TODO change to string_view?
-                                                const std::initializer_list<std::basic_string<T>> &p_names,
+    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string_view<T> name, const Type ret_type, const bool ret_const,
+                                                const std::initializer_list<std::basic_string_view<T>> p_names,
                                                 const std::initializer_list<Type> &p_types,
                                                 const std::initializer_list<bool> &p_consts) const;
     std::unique_ptr<FunctionDefinition<T>> &get_function(const std::basic_string<T> &name);
     std::shared_ptr<Variable<T>> get_variable_from_current_context(const std::basic_string<T> &name);
-    bool is_function_pointer_valid(const std::unique_ptr<FunctionDefinition<T>> & ptr);
-    /*
-    bool is_value_bool(const value_t<T> &v);
-    bool is_value_int(const value_t<T> &v);
-    bool is_value_float(const value_t<T> &v);
-    bool is_value_string(const value_t<T> &v);
-    bool is_current_value_bool();
-    bool is_current_value_int();
-    bool is_current_value_float();
-    bool is_current_value_string();
-    */
     bool is_current_value_of_type(const Type type) const;
     bool is_variable_name_in_current_scope(const std::basic_string<T> &name) const;
     bool is_variable_name_in_current_context(const std::basic_string<T> &name) const;
@@ -312,9 +302,8 @@ private:
     void increment_current_match_index();
     std::vector<value_t<T>> &get_current_match_arguments();
     const std::vector<value_t<T>> &get_current_match_arguments() const;
-    bool is_expression_match(const ExpressionType type) const;
     const value_t<T> &get_current_match_argument() const;
-    static ExpressionType map_from_match(const ExpressionType type);
+    static std::optional<ExpressionType> map_from_match(const ExpressionType type);
 
     const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
