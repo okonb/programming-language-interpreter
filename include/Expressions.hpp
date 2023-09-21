@@ -15,7 +15,7 @@ public:
     SingleArgExpression(const ExpressionType t, std::unique_ptr<IExpression<T>> expr, const Position &pos) :
         IExpression<T>{t, pos}, expression{std::move(expr)} {}
     ~SingleArgExpression() override = default;
-    const std::unique_ptr<IExpression<T>> &get_expression() const {return expression;}  //TODO figure out a way to const this
+    const std::unique_ptr<IExpression<T>> &get_expression() const {return expression;}
     
     void accept(IVisitor<T> &visitor) const override { visitor.visit(*this); }
 

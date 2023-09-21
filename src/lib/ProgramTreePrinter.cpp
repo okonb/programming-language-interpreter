@@ -24,6 +24,7 @@ void ProgramTreePrinter<T>::visit(const FunctionDefinition<T> &instr)
     const auto &parameters = instr.get_parameters();
     const auto &block = instr.get_block();
     stream << "FunctionDefinition " << name << " : " << type->get_str_representation() << "\n";
+    const auto guard2 = get_guard();
     print_spacing();
     stream << "params:\n";
     for(const auto &param : *parameters){
@@ -36,7 +37,6 @@ void ProgramTreePrinter<T>::visit(const FunctionDefinition<T> &instr)
     for(const auto &instruction : *block){
         instruction->accept(*this);
     }
-    print_spacing();
     stream << "\n";
 }
 
@@ -81,15 +81,24 @@ void ProgramTreePrinter<T>::visit(const IfInstruction<T> &instr){
     if(condition){
         print_spacing();
         stream << "IfInstruction\n";
+        const auto guard2 = get_guard();
         print_spacing();
         stream << "condition:\n";
         condition->accept(*this);
+        print_spacing();
+        stream << "block:\n";
+        for(const auto &expression : *code_block){
+            expression->accept(*this);
+        }
     }
-    print_spacing();
-    stream << "block:\n";
-    for(const auto &expression : *code_block){
-        expression->accept(*this);
+    else{
+        print_spacing();
+        stream << "block:\n";
+        for(const auto &expression : *code_block){
+            expression->accept(*this);
+        }
     }
+
     if(else_block){
         print_spacing();
         stream << "Else\n";
@@ -104,6 +113,7 @@ void ProgramTreePrinter<T>::visit(const WhileInstruction<T> &instr){
     const auto &code_block = instr.get_code_block();
     print_spacing();
     stream << "WhileInstruction\n";
+    const auto guard2 = get_guard();
     print_spacing();
     stream << "condition:\n";
     condition->accept(*this);
@@ -120,17 +130,14 @@ void ProgramTreePrinter<T>::visit(const SingleArgExpression<T> &expr){
     print_spacing();
     stream << expr.get_string_repr() << "\n";
 
+    const auto guard2 = get_guard();
     const auto &expression = expr.get_expression();
     if(expression){
         print_spacing();
         stream << "value:\n";
         expression->accept(*this);
     }
-    else{
-        stream << "\n";
-    }
-
-}
+ }
 
 template <CharType T>
 void ProgramTreePrinter<T>::visit(const TwoArgExpression<T> &expr){
@@ -138,6 +145,7 @@ void ProgramTreePrinter<T>::visit(const TwoArgExpression<T> &expr){
     print_spacing();
     stream << expr.get_string_repr() << "\n";
 
+    const auto guar2 = get_guard();
     const auto &left_expression = expr.get_left_expression();
     const auto &right_expression = expr.get_right_expression();
     if(left_expression){
@@ -178,6 +186,7 @@ void ProgramTreePrinter<T>::visit(const FunctionCall<T> &expr){
     print_spacing();
     stream << expr.get_string_repr() << " " << expr.get_name() << "\n"; 
 
+    const auto guard2 = get_guard();
     print_spacing();
     stream <<"args:\n";
     for(const auto &expression : *arguments){
@@ -194,6 +203,8 @@ void ProgramTreePrinter<T>::visit(const MatchOperation<T> &expr){
 
     print_spacing();
     stream << expr.get_string_repr() << "\n";
+
+    const auto guard2 = get_guard();
     print_spacing();
     stream << "args:\n";
     for(const auto &expression : *arguments){
@@ -201,20 +212,22 @@ void ProgramTreePrinter<T>::visit(const MatchOperation<T> &expr){
     }
     print_spacing();
     stream << "match block:\n";
+    const auto guard3 = get_guard();
     for(const auto &line : *block){
         const auto &pattern = line->get_pattern();
         const auto &expression = line->get_expression();
-        print_spacing(1);
-        stream << "MatchLine:\n";
+        print_spacing();
+        stream << "match line:\n";
+        const auto guard4 = get_guard();
         if(pattern){
-            print_spacing(1);
+            print_spacing();
             stream << "pattern:\n";
             for(const auto &exp : *pattern){
                 exp->accept(*this);
             }
         }
         if(expression){
-            print_spacing(1);
+            print_spacing();
             stream << "expression:\n";
             expression->accept(*this);
         }

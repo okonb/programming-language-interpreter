@@ -224,7 +224,7 @@ template<CharType T>
 class Context{
 public:
     Context() : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back({});}
-    Context(Scope<T> &&scp) : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back(std::move(scp));}
+    explicit Context(Scope<T> &&scp) : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back(std::move(scp));}
     std::vector<Scope<T>> &get_scopes() {return scopes;}
     const std::vector<Scope<T>> &get_scopes() const {return scopes;}
     size_t get_match_index() const {return current_match_index;}
@@ -315,7 +315,7 @@ private:
     bool is_expression_match(const ExpressionType type) const;
     const value_t<T> &get_current_match_argument() const;
     static ExpressionType map_from_match(const ExpressionType type);
-    
+
     const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
     class recursion_level_guard{

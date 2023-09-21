@@ -195,8 +195,6 @@ std::basic_string_view<T> Lexer<T>::get_token_text(const TokenType t) { //TODO m
     return token_to_text.at(t);
 }
 
-//TODO check all suspicious static_cast s
-
 template<CharType T>
 Token<T> Lexer<T>::get_next_token(){
     skip_whitespace();

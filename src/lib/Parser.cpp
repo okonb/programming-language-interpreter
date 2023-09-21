@@ -644,7 +644,7 @@ std::unique_ptr<IInstruction<T>> ParserBase<T>::try_parse_return_statement(){
     if(auto match_operation = try_parse_match_operation()){
         return std::make_unique<ReturnInstruction<T>>(std::move(match_operation), start_position);
     }
-    //TODO production handled by try_parse_statement handles this somewhat... no peeking!
+    //TODO production handled by try_parse_statement... no peeking!
     if(is_current_token_of_type(TokenType::Semicolon)){
         return std::make_unique<ReturnInstruction<T>>(nullptr, start_position);
     }
@@ -728,7 +728,7 @@ std::unique_ptr<std::vector<std::unique_ptr<IExpression<T>>>> ParserBase<T>::try
     return pattern;
 }
 
-// pattern_element = expression | match_expression | Underscore;    TODO wut match_expression how
+// pattern_element = expression | match_expression | Underscore;
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
     const auto start_position = get_current_position();

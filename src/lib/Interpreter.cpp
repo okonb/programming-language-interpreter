@@ -462,6 +462,7 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
     const auto &parameters = function->get_parameters();
     const auto &arguments = expr.get_arguments();
     std::vector<TypeIdentifier<T>> param_types{};
+    param_types.reserve(parameters->size());
     for(const auto &param : *parameters){
         param_types.push_back(*param->get_type());
     }
@@ -469,6 +470,7 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
         throw FunctionArgumentMismatchException<T>(name, param_types, {}, arguments->size(), expr.get_position());
     }
     std::vector<TypeIdentifier<T>> argument_types{};
+    argument_types.reserve(parameters->size());
     Scope<T> arguments_evaluated{};
     for(size_t index = 0; index < parameters->size(); ++index){
         (*arguments)[index]->accept(*this);
@@ -502,6 +504,7 @@ void Interpreter<T>::visit(const MatchOperation<T> &instr){
     auto &argument_values = get_current_match_arguments();
 
     argument_values.clear();
+    argument_values.reserve(arguments->size());
 
     for(const auto &arg : *arguments){
         arg->accept(*this);
@@ -831,6 +834,7 @@ std::unique_ptr<FunctionDefinition<T>> Interpreter<T>::get_f_d( const std::basic
 
     auto return_t = std::make_unique<TypeIdentifier<T>>(ret_type, ret_const);
     auto parameters = std::make_unique<std::vector<std::unique_ptr<ParameterDefinition<T>>>>();
+    parameters->reserve(p_names.size());
     for(size_t index = 0; index < p_names.size(); ++index){
         auto type = std::make_unique<TypeIdentifier<T>>(p_types.begin()[index], p_consts.begin()[index]);
         parameters->push_back(std::make_unique<ParameterDefinition<T>>(std::move(type), p_names.begin()[index]));

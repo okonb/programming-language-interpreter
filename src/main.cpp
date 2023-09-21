@@ -22,7 +22,7 @@ int main(int argc, char** argv){
 
 
     if(main_args_size < 2){
-        std::cerr << "Please provide program filename as the argument.\n";
+        std::cerr << "Please provide program filename as the first argument.\n";
         return 1;
     }
     
@@ -50,13 +50,11 @@ int main(int argc, char** argv){
 
     int64_t return_code = 1;
 
-    Lexer lex(infile);
-    CommentFilterLexer<char> filered_lex{lex};
-    Parser parser(filered_lex);
-    std::unique_ptr<Program<char>> program = nullptr;
-
     try{
-        program = std::make_unique<Program<char>>(parser.parse());
+        Lexer lex(infile);
+        CommentFilterLexer<char> filered_lex{lex};
+        Parser parser(filered_lex);
+        auto program = std::make_unique<Program<char>>(parser.parse());
         if constexpr(PRINT_TREE_BEFORE_EXECUTION){
             ProgramTreePrinter<char>{std::cout}.print_program(*program);
         }
