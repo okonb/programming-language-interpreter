@@ -51,7 +51,7 @@ constexpr light_map<ExpressionType, std::basic_string_view<char>, 41UL> IExpress
 template class IExpression<char>;
 /*
 template<>
-const std::map<ExpressionType, std::basic_string<wchar_t>> IExpression<wchar_t>::expression_string_map{
+const std::unordered_map<ExpressionType, std::basic_string<wchar_t>> IExpression<wchar_t>::expression_string_map{
     {ExpressionType::Expression,                    L"Expression"},
     {ExpressionType::PlusExpression,                L"PlusExpression"},
     {ExpressionType::MinusExpression,               L"MinusExpression"},

@@ -85,7 +85,7 @@ constexpr light_map<std::basic_string_view<char>, TokenType, 18UL> Lexer<char>::
 
 /*
 template<>
-const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::keyword_lookup{
+const std::unordered_map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::keyword_lookup{
     {L"and",     TokenType::And},
     {L"or",      TokenType::Or},
     {L"not",     TokenType::Not},
@@ -141,7 +141,7 @@ constexpr light_map<std::basic_string_view<char>, TokenType, 4UL> Lexer<char>::t
 };
 /*
 template<>
-const std::map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::two_char_operator_lookup{
+const std::unordered_map<std::basic_string<wchar_t>, TokenType> Lexer<wchar_t>::two_char_operator_lookup{
     {L">=",  TokenType::Gte},
     {L"<=",  TokenType::Lte},
     {L"==",  TokenType::Equals},

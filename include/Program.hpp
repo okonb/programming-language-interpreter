@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <stdexcept>
 
@@ -26,7 +26,7 @@ template<CharType T = char>
 class Program{
 public:
     Program(std::unique_ptr<std::vector<std::unique_ptr<FunctionDefinition<T>>>> functions) :
-        function_definitions{std::make_unique<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>>()} {
+        function_definitions{std::make_unique<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>>()} {
         
         if(!functions){
             throw ProgramInitializationError<T>("Null pointer provided!");
@@ -40,15 +40,15 @@ public:
             function_definitions->insert(std::make_pair(name, std::move(function)));
         }
     }
-    const std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> &get_function_definitions() const {
+    const std::unique_ptr<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> &get_function_definitions() const {
         return function_definitions;
     };
-    std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> give_function_definitions(){
+    std::unique_ptr<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> give_function_definitions(){
         return std::move(function_definitions);
     }
     
 private:
-    std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
+    std::unique_ptr<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
 };
 
 #endif // PROGRAM_HPP

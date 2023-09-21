@@ -16,7 +16,7 @@ template class TypeIdentifier<char>;
 
 /*
 template<>
-const std::map<Type, std::basic_string<wchar_t>> TypeIdentifier<wchar_t>::type_map{
+const std::unordered_map<Type, std::basic_string<wchar_t>> TypeIdentifier<wchar_t>::type_map{
     {Type::Integer,     L"int"},
     {Type::Floating,    L"float"},
     {Type::String,      L"str"},

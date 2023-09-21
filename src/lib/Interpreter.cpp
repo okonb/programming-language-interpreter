@@ -72,7 +72,7 @@ template class OperatorResolver<char, double, double>;
 
 /*
 template<CharType T, NumericType P, NumericType R>
-const std::map<ExpressionType, std::function<value_t<T>(P, R)>> OperatorResolver<T, P, R>::numeric_map {
+const std::unordered_map<ExpressionType, std::function<value_t<T>(P, R)>> OperatorResolver<T, P, R>::numeric_map {
         {ExpressionType::PlusExpression,            [](P l, R r) -> value_t<T> {return l + r;}},
         {ExpressionType::MinusExpression,           [](P l, R r) -> value_t<T> {return l - r;}},
         {ExpressionType::MultiplicationExpression,  [](P l, R r) -> value_t<T> {return l * r;}},
@@ -97,6 +97,7 @@ Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream
         out_stream{o_stream}, program_arguments{args}, current_recursion_level{0UL},
         MAX_RECURSION_LEVEL{max_recursion_depth} {
         add_builtins();
+        function_stack.reserve(MAX_RECURSION_LEVEL + 1);
     }
 
 
@@ -678,7 +679,7 @@ void Interpreter<T>::execute_block(const std::vector<std::unique_ptr<IInstructio
 
 template<CharType T>
 void Interpreter<T>::add_builtins(){
-    std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>> builtins{};
+    std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>> builtins{};
     builtins.insert(std::make_pair("print", get_f_d("print", Type::Void, false,
         {"text"},
         {Type::String},
@@ -737,7 +738,7 @@ void Interpreter<T>::add_builtins(){
 
 template<CharType T>
 void Interpreter<T>::run_builtin(const std::basic_string<T> &name){
-    const static std::map<std::basic_string_view<T>, std::function<void(void)>> lambda_map{
+    const static std::unordered_map<std::basic_string_view<T>, std::function<void(void)>> lambda_map{
         {"print",   [&](void) -> void {std::visit(overload{
                         [&](std::monostate) -> void {this->out_stream << "None";},
                         [&](auto arg)       -> void {this->out_stream << arg;}
