@@ -92,7 +92,7 @@ const std::unordered_map<ExpressionType, std::function<value_t<T>(P, R)>> Operat
 template<CharType T>
 Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream,
     const std::vector<std::basic_string<T>> &args, size_t max_recursion_depth) :
-        mem_res{}, function_definitions{std::move(prog->give_function_definitions())},
+        function_definitions{std::move(prog->give_function_definitions())},
         current_value{}, returned_flag{false}, match_flag{false}, function_stack{},
         out_stream{o_stream}, program_arguments{args}, current_recursion_level{0UL},
         MAX_RECURSION_LEVEL{max_recursion_depth} {
