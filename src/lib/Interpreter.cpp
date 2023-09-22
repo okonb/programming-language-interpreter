@@ -93,8 +93,8 @@ template<CharType T>
 Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream,
     const std::vector<std::basic_string<T>> &args, size_t max_recursion_depth) :
         mem_res{}, function_definitions{std::move(prog->give_function_definitions())},
-        current_value{}, returned_flag{false}, match_flag{false}, function_stack{},
-        out_stream{o_stream}, program_arguments{args}, current_recursion_level{0UL},
+        current_value{}, returned_flag{false}, match_flag{false}, function_stack{&mem_res},
+        out_stream{o_stream}, program_arguments{args}, open_files{&mem_res}, current_recursion_level{0UL},
         MAX_RECURSION_LEVEL{max_recursion_depth} {
         add_builtins();
         function_stack.reserve(MAX_RECURSION_LEVEL + 1);
@@ -440,7 +440,7 @@ void Interpreter<T>::visit(const IdentifierExpression<T> &expr){
         if(parameters->size() != 1 || get_current_match_arguments().size() == get_current_match_index()){
             throw InvalidPatternFunctionSignatureException<T>(expr.get_position());
         }
-        std::vector<TypeIdentifier<T>> argument_types{};
+        std::pmr::vector<TypeIdentifier<T>> argument_types{&mem_res};
         const auto &argument = get_current_match_argument();
         const auto argument_type = TypeIdentifier<T>(get_value_type(argument), true);
         argument_types.push_back(argument_type);
@@ -448,10 +448,10 @@ void Interpreter<T>::visit(const IdentifierExpression<T> &expr){
             throw FunctionArgumentMismatchException<T>(name, {TypeIdentifier<T>(*(*parameters)[0]->get_type())}, argument_types, 1, expr.get_position());
         }
         
-        Scope<T> arguments_evaluated{};
+        Scope<T> arguments_evaluated{&mem_res};
         arguments_evaluated.insert(std::make_pair((*parameters)[0]->get_name(), std::make_shared<Variable<T>>(argument, argument_type)));    
         
-        push_context(Context<T>(std::move(arguments_evaluated)));
+        push_context(Context<T>(std::move(arguments_evaluated), mem_res));
         function->accept(*this);
         pop_context();
         returned_flag = false;
@@ -478,7 +478,7 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
 
     const auto &parameters = function->get_parameters();
     const auto &arguments = expr.get_arguments();
-    std::vector<TypeIdentifier<T>> param_types{};
+    std::pmr::vector<TypeIdentifier<T>> param_types{&mem_res};
     param_types.reserve(parameters->size());
     for(const auto &param : *parameters){
         param_types.push_back(*param->get_type());
@@ -486,9 +486,9 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
     if(parameters->size() != arguments->size()){
         throw FunctionArgumentMismatchException<T>(name, param_types, {}, arguments->size(), expr.get_position());
     }
-    std::vector<TypeIdentifier<T>> argument_types{};
+    std::pmr::vector<TypeIdentifier<T>> argument_types{&mem_res};
     argument_types.reserve(parameters->size());
-    Scope<T> arguments_evaluated{};
+    Scope<T> arguments_evaluated{&mem_res};
     for(size_t index = 0; index < parameters->size(); ++index){
         (*arguments)[index]->accept(*this);
 
@@ -505,7 +505,7 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
             throw FunctionArgumentMismatchException<T>(name, param_types, argument_types, arguments->size(), expr.get_position());
         }
     }
-    push_context(Context<T>(std::move(arguments_evaluated)));
+    push_context(Context<T>(std::move(arguments_evaluated), mem_res));
     function->accept(*this);
     pop_context();
     returned_flag = false;
@@ -655,7 +655,7 @@ void Interpreter<T>::pop_context(){
 
 template<CharType T>
 void Interpreter<T>::push_scope(){
-    get_current_context().get_scopes().push_back({});
+    get_current_context().get_scopes().push_back(Scope<T>{&mem_res});
 }
 
 template<CharType T>
@@ -894,12 +894,12 @@ void Interpreter<T>::increment_current_match_index(){
 }
 
 template<CharType T>
-std::vector<value_t<T>> &Interpreter<T>::get_current_match_arguments(){
+std::pmr::vector<value_t<T>> &Interpreter<T>::get_current_match_arguments(){
     return get_current_context().get_match_arguments();
 }
 
 template<CharType T>
-const std::vector<value_t<T>> &Interpreter<T>::get_current_match_arguments() const{
+const std::pmr::vector<value_t<T>> &Interpreter<T>::get_current_match_arguments() const{
     return get_current_context().get_match_arguments();
 }
 

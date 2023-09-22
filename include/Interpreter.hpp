@@ -16,6 +16,7 @@
 #include <variant>
 #include <fstream>
 #include <optional>
+#include <memory_resource>
 
 static constexpr const bool RESERVE_ON_SCOPE_CREATION = true;
 static constexpr const size_t RESERVE_ON_SCOPE_CREATION_SIZE = 3;
@@ -189,8 +190,8 @@ private:
 template<CharType T>
 class FunctionArgumentMismatchException : public std::runtime_error{
 public:
-    FunctionArgumentMismatchException(const std::basic_string_view<T> operation_n, const std::vector<TypeIdentifier<T>> &types_e, const std::vector<TypeIdentifier<T>> &types_g, size_t no, const Position &pos) :
-        std::runtime_error{"Mismatch in argument types."}, operation_name{operation_n}, expected_types{types_e}, gotten_types{types_g}, number{no}, position{pos} {}
+    FunctionArgumentMismatchException(const std::basic_string_view<T> operation_n, const std::pmr::vector<TypeIdentifier<T>> &types_e, const std::pmr::vector<TypeIdentifier<T>> &types_g, size_t no, const Position &pos) :
+        std::runtime_error{"Mismatch in argument types."}, operation_name{operation_n}, expected_types{types_e.begin(), types_e.end()}, gotten_types{types_g.begin(), types_g.end()}, number{no}, position{pos} {}
     const std::basic_string<T> &get_function_name() const {return operation_name;}
     const std::vector<TypeIdentifier<T>> &get_expected_type_list() const {return expected_types;}
     const std::vector<TypeIdentifier<T>> &get_gotten_type_list() const {return gotten_types;}
@@ -221,34 +222,37 @@ private:
 
 
 template<CharType T>
-using Scope = std::unordered_map<std::basic_string<T>, std::shared_ptr<Variable<T>>>;
+using Scope = std::pmr::unordered_map<std::basic_string<T>, std::shared_ptr<Variable<T>>>;
 
 
 template<CharType T>
 class Context{
 public:
-    Context() : scopes{}, current_match_index{0}, current_match_arguments{} {
+    Context(std::pmr::memory_resource &mem_res) :
+            memory_resource{mem_res}, scopes{&memory_resource}, current_match_index{0}, current_match_arguments{&memory_resource} {
         if constexpr(RESERVE_ON_SCOPE_CREATION){
         scopes.reserve(RESERVE_ON_SCOPE_CREATION_SIZE);
         }
-        scopes.push_back({});
+        scopes.push_back({&memory_resource});
     }
-    explicit Context(Scope<T> &&scp) : scopes{}, current_match_index{0}, current_match_arguments{} {
+    explicit Context(Scope<T> &&scp, std::pmr::memory_resource &mem_res) :
+            memory_resource{mem_res}, scopes{&memory_resource}, current_match_index{0}, current_match_arguments{&memory_resource} {
         if constexpr(RESERVE_ON_SCOPE_CREATION){
         scopes.reserve(RESERVE_ON_SCOPE_CREATION_SIZE);
         }
         scopes.push_back(std::move(scp));
     }
-    std::vector<Scope<T>> &get_scopes() {return scopes;}
-    const std::vector<Scope<T>> &get_scopes() const {return scopes;}
+    std::pmr::vector<Scope<T>> &get_scopes() {return scopes;}
+    const std::pmr::vector<Scope<T>> &get_scopes() const {return scopes;}
     size_t get_match_index() const {return current_match_index;}
     void set_match_index(const size_t i) {current_match_index = i;}
-    std::vector<value_t<T>> &get_match_arguments() {return current_match_arguments;}
-    const std::vector<value_t<T>> &get_match_arguments() const {return current_match_arguments;}
+    std::pmr::vector<value_t<T>> &get_match_arguments() {return current_match_arguments;}
+    const std::pmr::vector<value_t<T>> &get_match_arguments() const {return current_match_arguments;}
 private:
-    std::vector<Scope<T>> scopes;
+    std::pmr::memory_resource &memory_resource;
+    std::pmr::vector<Scope<T>> scopes;
     size_t current_match_index;
-    std::vector<value_t<T>> current_match_arguments;
+    std::pmr::vector<value_t<T>> current_match_arguments;
 };
 
 
@@ -273,14 +277,15 @@ public:
 
     void visit(const MatchOperation<T> &instr) override;
 private:
+    std::pmr::unsynchronized_pool_resource mem_res;
     std::unique_ptr<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
     value_t<T> current_value;
     std::shared_ptr<Variable<T>> current_variable;
     bool returned_flag, match_flag;
-    std::vector<Context<T>> function_stack;
+    std::pmr::vector<Context<T>> function_stack;
     std::basic_ostream<T> &out_stream;
     const std::vector<std::basic_string<T>> program_arguments;
-    std::unordered_map<std::basic_string<T>, std::basic_fstream<T>> open_files;
+    std::pmr::unordered_map<std::basic_string<T>, std::basic_fstream<T>> open_files;
     size_t current_recursion_level;
     const size_t MAX_RECURSION_LEVEL;
     std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string_view<T> name, const Type ret_type, const bool ret_const,
@@ -313,8 +318,8 @@ private:
     size_t get_current_match_index() const;
     void set_current_match_index(const size_t i);
     void increment_current_match_index();
-    std::vector<value_t<T>> &get_current_match_arguments();
-    const std::vector<value_t<T>> &get_current_match_arguments() const;
+    std::pmr::vector<value_t<T>> &get_current_match_arguments();
+    const std::pmr::vector<value_t<T>> &get_current_match_arguments() const;
     const value_t<T> &get_current_match_argument() const;
     static std::optional<ExpressionType> map_from_match(const ExpressionType type);
 
