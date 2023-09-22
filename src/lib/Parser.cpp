@@ -745,7 +745,7 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
 }
 
 template <CharType T>
-const std::optional<ExpressionType> ParserBase<T>::try_parse_current_unary_expression_type(){
+std::optional<ExpressionType> ParserBase<T>::try_parse_current_unary_expression_type(){
     if(check_and_advance(TokenType::Not)){
         return ExpressionType::NotExpression;
     }

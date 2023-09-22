@@ -16,6 +16,7 @@
 #include <variant>
 #include <fstream>
 #include <optional>
+#include <memory_resource>
 
 static constexpr const bool RESERVE_ON_SCOPE_CREATION = true;
 static constexpr const size_t RESERVE_ON_SCOPE_CREATION_SIZE = 3;
@@ -273,6 +274,7 @@ public:
 
     void visit(const MatchOperation<T> &instr) override;
 private:
+    std::pmr::unsynchronized_pool_resource mem_res;
     std::unique_ptr<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
     value_t<T> current_value;
     std::shared_ptr<Variable<T>> current_variable;

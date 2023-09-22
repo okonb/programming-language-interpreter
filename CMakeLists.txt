@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "")
 set(CMAKE_CXX_EXTENSIONS OFF)
-#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-modernize-redundant-void-arg,-misc-no-recursion,-google-readability-todo")
+#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-misc-no-recursion,-google-readability-todo")
 set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror -Wconversion )
 # -fsanitize=undefined -fsanitize-minimal-runtime
 # add_link_options("-fsanitize=undefined")

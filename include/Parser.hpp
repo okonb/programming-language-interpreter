@@ -84,7 +84,7 @@ public:
     std::unique_ptr<IExpression<T>> try_parse_pattern_element();
     std::unique_ptr<IExpression<T>> try_parse_condition();
 
-    const std::optional<ExpressionType> try_parse_current_unary_expression_type();
+    std::optional<ExpressionType> try_parse_current_unary_expression_type();
 
     bool is_current_token_of_type(TokenType type) const;
     bool is_current_token_a_type() const;
