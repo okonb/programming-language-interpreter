@@ -100,7 +100,6 @@ Interpreter<T>::Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream
         function_stack.reserve(MAX_RECURSION_LEVEL + 1);
     }
 
-
 template<CharType T>
 int64_t Interpreter<T>::run(const std::basic_string<T> &to_start_name){
     const FunctionCall<T> funcall{to_start_name, std::make_unique<std::vector<std::unique_ptr<IExpression<T>>>>(), Position()};
