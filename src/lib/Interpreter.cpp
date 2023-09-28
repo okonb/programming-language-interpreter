@@ -29,8 +29,18 @@ public:
     };
     inline const static light_map<ExpressionType, std::function<value_t<T>(bool, bool)>, 2UL> bool_map{
         std::array<std::pair<ExpressionType, std::function<value_t<T>(const bool, const bool)>>, 2UL>{{
-        {ExpressionType::EqualsExpression,          [](const bool l, const bool r) -> value_t<T> {return l == r;}},
-        {ExpressionType::NotEqualsExpression,       [](const bool l, const bool r) -> value_t<T> {return l != r;}},
+        {ExpressionType::EqualsExpression,      [](const bool l, const bool r) -> value_t<T> {return l == r;}},
+        {ExpressionType::NotEqualsExpression,   [](const bool l, const bool r) -> value_t<T> {return l != r;}},
+        }}
+    };
+    inline const static light_map<ExpressionType, std::function<value_t<T>(const std::basic_string<T> &, const std::basic_string<T> &)>, 3UL> string_map{
+        std::array<std::pair<ExpressionType, std::function<value_t<T>(const std::basic_string<T> &, const std::basic_string<T> &)>>, 3UL>{{
+        {ExpressionType::StrConcatExpression,   [](const std::basic_string<T> &l, const std::basic_string<T> &r) -> value_t<T> {
+                                                        std::basic_stringstream<T> str{};
+                                                        str << l << r;
+                                                        return str.str();}},
+        {ExpressionType::EqualsExpression,      [](const std::basic_string<T> &l, const std::basic_string<T> &r) -> value_t<T> {return l == r;}},
+        {ExpressionType::NotEqualsExpression,   [](const std::basic_string<T> &l, const std::basic_string<T> &r) -> value_t<T> {return l != r;}},
         }}
     };
     static const auto &resolve_numeric(ExpressionType type){
@@ -39,6 +49,12 @@ public:
     static const auto &resolve_bool(ExpressionType type){
         return bool_map.at(type);
     }
+    static const auto &resolve_string(ExpressionType type){
+        if(const auto lambda = string_map.find(type); lambda != string_map.cend())
+            return lambda->second;
+        throw OperatorArgumentMismatchException<T>(IExpression<T>::get_string_repr(type), {}, {}, {Type::String, Type::String}, {});
+    }
+    /*
     static std::function<value_t<T>(const std::basic_string<T>&, const std::basic_string<T>&)> resolve_string(ExpressionType type){
         if(type == ExpressionType::StrConcatExpression){
             return [](const std::basic_string<T> &l, const std::basic_string<T> &r){
@@ -57,8 +73,9 @@ public:
                 return l != r;
             };
         }
-    throw OperatorArgumentMismatchException<T>(IExpression<T>::get_string_repr(type), {}, {}, {Type::String, Type::String}, {});
+        throw OperatorArgumentMismatchException<T>(IExpression<T>::get_string_repr(type), {}, {}, {Type::String, Type::String}, {});
     }
+    */
 };
 
 
@@ -467,29 +484,31 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
     const recursion_level_guard guard{current_recursion_level};
 
     const auto &name = expr.get_name(); 
+
+    if(is_recursion_level_exceeded()){
+        throw RecursionLimitException<T>(current_recursion_level, name, expr.get_position());
+    }
+    
     const auto &function = get_function(name);
     if(!function){
         throw FunctionNotDeclaredException<T>(name, expr.get_position());
     }
 
-    if(is_recursion_level_exceeded()){
-        throw RecursionLimitException<T>(current_recursion_level, name, expr.get_position());
-    }
-
     const auto &parameters = function->get_parameters();
     const auto &arguments = expr.get_arguments();
+    const auto parameters_size = parameters->size();
     std::vector<TypeIdentifier<T>> param_types{};
-    param_types.reserve(parameters->size());
+    param_types.reserve(parameters_size);
     for(const auto &param : *parameters){
         param_types.push_back(*param->get_type());
     }
-    if(parameters->size() != arguments->size()){
+    if(parameters_size != arguments->size()){
         throw FunctionArgumentMismatchException<T>(name, param_types, {}, arguments->size(), expr.get_position());
     }
     std::vector<TypeIdentifier<T>> argument_types{};
-    argument_types.reserve(parameters->size());
+    argument_types.reserve(parameters_size);
     Scope<T> arguments_evaluated{};
-    for(size_t index = 0; index < parameters->size(); ++index){
+    for(size_t index = 0; index < parameters_size; ++index){
         (*arguments)[index]->accept(*this);
 
         if((*arguments)[index]->get_expression_type() == ExpressionType::IdentifierExpression){
@@ -499,7 +518,7 @@ void Interpreter<T>::visit(const FunctionCall<T> &expr){
         }
         else{
             arguments_evaluated.insert(std::make_pair((*parameters)[index]->get_name(), std::make_shared<Variable<T>>(current_value, TypeIdentifier<T>(get_current_value_type(), true))));
-            argument_types.push_back(TypeIdentifier<T>(get_current_value_type(), true));
+            argument_types.emplace_back(get_current_value_type(), true);
         }
         if(!is_argument_of_right_type(param_types[index], argument_types[index])){
             throw FunctionArgumentMismatchException<T>(name, param_types, argument_types, arguments->size(), expr.get_position());

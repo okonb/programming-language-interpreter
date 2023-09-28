@@ -1,0 +1,66 @@
+Opening_parenth = "(";
+Closing_parenth = ")";
+Opening_curly   = "{";
+Closing_curly   = "}";
+Colon           = ":";
+Semicolon       = ";";
+Comma           = ",";
+Underscore      = "_";
+Assign          = "=";
+Plus            = "+";
+Minus           = "-";
+Multiplication  = "*";
+Division        = "/";
+Modulo          = "%";
+String_concat   = "|";
+And             = "and";
+Or              = "or";
+Not             = "not";
+True            = "true";
+False           = "false";
+Equals          = "==";
+Not_equals      = "!=”;
+Lt              = "<";
+Gt              = ">";
+Lte             = "<=";
+Gte             = ">=";
+Integer_type    = "int";
+Floating_type   = "float";
+String_type     = "str";
+File_type       = "file";
+Bool_type       = "bool";
+Void_type       = "void";
+Return_keywd    = "return";
+Function_keywd  = "fun";
+If_keywd        = "if";
+Else_keywd      = "else";
+While_keywd     = "while";
+Const_keywd     = "const";
+Match_keywd     = "match";
+
+letter = [A-Za-z]					
+escaped_character = \\[abfnrtv\\"\?]
+nonzero_digit = [1-9]
+zero_digit = 0
+other_character = [^a-zA-z\\"0-9 ]
+
+letter_or_under         = letter
+                        | Underscore;
+digit                   = zero_digit
+                        | nonzero_digit;
+Integer_literal         = zero_digit
+                        | (nonzero_digit, {digit});
+Floating_literal        = (zero_digit
+                         | (nonzero_digit, {digit})),
+                          ".", (zero_digit
+                              | ({digit}, nonzero_digit));
+String_literal          = """, {letter
+                              | digit
+                              | escaped_character
+                              | other_character},
+                          """;
+Boolean_literal         = "true" | "false";
+
+Identifier              = letter, {letter_or_under
+                                 | digit};
+Comment                 = "#", ? characters that are not newline sequence ?

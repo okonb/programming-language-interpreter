@@ -1,0 +1,64 @@
+start_symbol                    = {function_definition};
+function_definition             = Function_keywd, Identifier, Opening_parenth, parameter_list_definition, Closing_parenth, Colon, (type_identifier | Void_type), code_block;
+parameter_list_definition       = [parameter_definition, {Comma, parameter_definition}];
+parameter_definition            = Identifier, Colon, type_identifier;
+type_identifier                 = [Const_keywd], (Integer_type
+                                                | Floating_type
+                                                | String_type
+                                                | File_type
+                                                | Bool_type);
+code_block                      = Opening_curly, { statement_or_control_block }, Closing_curly;
+statement_or_control_block	    = statement | control_block;
+statement                       = (var_def_assign_or_funcall
+                                | return_statement), Semicolon;
+expression                      = logic_factor, {Or, logic_factor};
+logic_factor                    = relation, {And, relation};
+relation                        = math_expression, [relation_operator, math_expression];
+
+math_expression                 = factor, {(Plus | Minus | String_concat), factor};
+factor                          = term, {(Multiplication | Division | Modulo), term};
+term                            = [Not | Minus], (literal
+                                                | identifier_or_funcall
+                                                | ( Opening_parenth, expression, Closing_parenth));
+
+
+match_expression                = match_logic_factor, {Or, match_logic_factor};
+match_logic_factor              = match_relation, {And, match_relation};
+match_relation                  = relation_operator, match_math_expression;
+
+match_math_expression           = match_factor, {(Plus | Minus | String_concat), match_factor};
+match_factor                    = match_term, {(Multiplication | Division | Modulo), match_term};
+match_term                      = [Not | Minus], (literal
+                                                | identifier_or_funcall
+                            	                | ( Opening_parenth, match_expression, Closing_parenth));
+
+
+identifier_or_funcall           = Identifier, [parenths_and_args];
+parenths_and_args               = Opening_parenth, argument_list, Closing_parenth;
+argument_list                   = [expression, {Comma, expression}];
+var_def_assign_or_funcall       = Identifier, (([Colon, type_identifier], Assign, (expression | match_operation)) | parenths_and_args);
+relation_operator               = Lt
+                                | Gt
+                                | Lte
+                                | Gte
+                                | Equals
+                                | Not_equals;
+return_statement                = Return_keywd, [expression | match_operation];
+literal                         = Integer_literal
+                                | Floating_literal
+                                | String_literal
+                                | Boolean_literal;
+control_block                   = if_block
+                                | while_block
+                                | match_operation;
+if_block                        = If_keywd, condition, code_block, [else_block];
+else_block                      = Else_keywd, (if_block | code_block);
+while_block                     = While_keywd, condition, code_block;
+condition				        = Opening_parenth, expression, Closing_parenth;
+match_operation                 = Match_keywd, Opening_parenth, expression, {Comma, expression}, Closing_parenth, match_block;
+match_block                     = Opening_curly, match_line, {Comma, match_line}, Closing_curly;
+match_line                      = pattern, Colon, expression;
+pattern                         = pattern_element, {Comma, pattern_element};
+pattern_element                 = expression
+                                | match_expression
+                                | Underscore;
