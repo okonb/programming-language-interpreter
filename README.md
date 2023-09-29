@@ -9,7 +9,7 @@ fun example(number: const int): str {
     };
 }
 ```
-*It is currently not advanced or convenient enough to build anything non-trivial (no arrays, limited I/O etc.).*
+*The language is currently not advanced or convenient enough to build anything non-trivial with it (no arrays, limited I/O etc.).*
 
 ## Building
 ### Requirements
@@ -55,7 +55,7 @@ fun main(): int {
     return two;
 }
 ``` 
-Flow control is done through familiar, C-like constructs. Typing is strong, string concatenation operator `|` only accepts two strings, which necessitates use of conversion functions. 
+Flow control is done through familiar, C-like constructs. Typing is strong, e.g. string concatenation operator `|` only accepts two strings, which necessitates use of conversion functions. 
 ```
 fun flow(): void {
     num: const int = 4;
@@ -74,9 +74,7 @@ fun flow(): void {
 ```
 The special ingredient is the `match` operation, which can be also an expression. Patterns can be composed of values, function identifiers or ad-hoc relation predicates.
 ```
-fun is_even(num: const int): bool {
-    return num % 2 == 0;
-}
+fun is_even(n: const int): bool { return n % 2 == 0; }
 fun example(num: const int): str {
     return match(num, to_str_int(num)){
         _,          "2" :   "two",
@@ -112,7 +110,7 @@ fun main(): int {
 ```
 
 
-A more detailed description may be found in the `docs` catalog of the repository.
+A more detailed description may be found in the [`docs`](docs/README.md) catalog of the repository.
 
 ## Testing
 Currently tests are performed by building and running the `tests` executable. GTest is used as a testing framework.
@@ -123,6 +121,8 @@ A lexer must implement the ILexer interface which lets you perform a poor-man's 
 The parser is broken into ParserBase and Parser for ease of testing. Implemented parser is a recursively descending one. It produces a list of function definition objects containing tree structures ready to be executed (we're skipping the formal AST).
 
 The Interpreter is implemented as a visitor for elements of the program tree. For ease of implementation, most binary operators are defined as lambdas wrapped in `std::function`s inside maps in the OperatorResolver class and invoked through `std::visit` of type-erased `std::variant` variables. This makes execution a lot slower than it could be but greatly simplifies and reduces amount of required code. File handles inside programs are currently implemented in a very hacky way and demand a refactor. 
+
+The standard `std::map` in maps which can be instantiated at compile time was substituted for a custom `light_map` - a constexpr capable, simple map type with linear search time complexity - perfectly suitable for small maps and offering greater optimization oppotrunities.
 
 Error handling is done through exceptions. A good example of how to handle them is located in the interpreter main function.
 

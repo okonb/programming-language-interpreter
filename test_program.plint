@@ -146,3 +146,16 @@ fun main(): int{
     fizzbuzz2(15);
     return 0;
 }
+
+fun inna(x: int): int{
+    # inna2();
+    
+}
+
+fun inna2(): int{
+    return 5;
+}
+
+fun p(x: const int) : void{
+    print(to_str_int(x) | "\n");
+}

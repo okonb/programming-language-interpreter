@@ -91,4 +91,4 @@ Input/output:
 
 
 ### Formal syntax definition
-Formal specification of the language in EBNF/regex can be found in the `language_specification` catalog.
+Formal specification of the language in EBNF/regex can be found in the [`language_specification`](language_specification/) catalog.
