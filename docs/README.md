@@ -35,7 +35,7 @@ The assignment `var1 = var2;` means copying contents of `var2` and assigning it 
 ### Functions
 Functions are defined as such:
 ```
-fun name(parameter1: type, parameter2: type): return_type{
+fun name(parameter1: type, parameter2: type): return_type {
     # do stuff...
 }
 ```
