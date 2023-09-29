@@ -1,4 +1,7 @@
 # Programming language interpreter
+
+[![Testing](https://github.com/okonb/programming-language-interpreter/actions/workflows/testing.yml/badge.svg)](https://github.com/okonb/programming-language-interpreter/actions/workflows/testing.yml)
+
 This project is an implementation of an interpreter for a simple, C-like syntax programming language with a pattern matching feature.
 ```
 fun example(number: const int): str {
