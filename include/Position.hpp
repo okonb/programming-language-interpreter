@@ -8,4 +8,4 @@ struct Position{
     uint64_t line, column;
 };
 
-#endif
+#endif // !POSITION_HPP

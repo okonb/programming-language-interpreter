@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <iostream>
+#include "Instructions.hpp"
+#include "Expressions.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "CommentFilterLexer.hpp"
 #include "Interpreter.hpp"
+#include "ProgramTreePrinter.hpp"
 
 // Lexer tests
 
@@ -841,8 +844,8 @@ TEST(ParserTest, Function_test1){
   auto fun_vect = parser.parse();
   auto program = Program<char>(std::move(fun_vect));
   ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_name(), "testowa");
-  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_type()->get_is_const(), false);
-  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_type()->get_type(), Type::Integer);
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_return_type()->get_is_const(), false);
+  ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_return_type()->get_type(), Type::Integer);
   auto& param1 = program.get_function_definitions()->at("testowa")->get_parameters()->at(0);
   ASSERT_EQ(param1->get_name(), "param1");
   ASSERT_EQ(param1->get_type()->get_is_const(), true);
@@ -852,7 +855,7 @@ TEST(ParserTest, Function_test1){
   ASSERT_EQ(param2->get_type()->get_is_const(), false);
   ASSERT_EQ(param2->get_type()->get_type(), Type::Floating);
   ASSERT_EQ(program.get_function_definitions()->at("testowa")->get_block()->size(), 0);
-  ASSERT_NO_THROW(program.print_self(std::cout));
+  ASSERT_NO_THROW(ProgramTreePrinter<char>{std::cout}.print_program(program));
 }
 
 TEST(ParserTest, check_and_advance){
@@ -872,7 +875,7 @@ TEST(ParserTest, is_current_token_relation_operator){
   Lexer lex(s);
   ParserBase parser(lex);
   ASSERT_EQ(parser.is_current_token_relation_operator(), true);
-  parser.get_next_token();
+  parser.advance_token();
   ASSERT_EQ(parser.is_current_token_relation_operator(), false);
 }
 
@@ -883,7 +886,7 @@ TEST(ParserTest, is_current_token_a_type){
   Lexer lex(s);
   ParserBase parser(lex);
   ASSERT_EQ(parser.is_current_token_a_type(), true);
-  parser.get_next_token();
+  parser.advance_token();
   ASSERT_EQ(parser.is_current_token_a_type(), false);
 }
 
@@ -1064,7 +1067,7 @@ TEST(ParserTest, try_parse_var_def_assign_or_funcall1){
   ASSERT_EQ(expr->get_name(), "var");
   ASSERT_EQ(expr->get_type()->get_type(), Type::Integer);
   ASSERT_EQ(expr->get_type()->get_is_const(), true);
-  ASSERT_NO_THROW(dynamic_cast<TwoArgExpression<char>*>(expr->get_expression().get()));
+  ASSERT_NO_THROW([[maybe_unused]] const auto* _ = dynamic_cast<TwoArgExpression<char>*>(expr->get_expression().get()));
 }
 
 TEST(ParserTest, try_parse_var_def_assign_or_funcall2){
@@ -1077,7 +1080,7 @@ TEST(ParserTest, try_parse_var_def_assign_or_funcall2){
   ASSERT_NO_THROW( expr = dynamic_cast<AssignmentInstruction<char>*>(parser.try_parse_var_def_assign_or_funcall().release()));
   ASSERT_NE(expr, nullptr);
   ASSERT_EQ(expr->get_name(), "var");
-  ASSERT_NO_THROW(dynamic_cast<LiteralExpression<char>*>(expr->get_expression().get()));
+  ASSERT_NO_THROW([[maybe_unused]] const auto* _ = dynamic_cast<LiteralExpression<char>*>(expr->get_expression().get()));
 }
 
 
@@ -1113,7 +1116,7 @@ TEST(ParserTest, try_parse_while_block_fail){
   s << "while(condition){funcall();";
   Lexer lex(s);
   ParserBase parser(lex);
-  ASSERT_THROW(dynamic_cast<WhileInstruction<char>*>(parser.try_parse_while_block().release()), UnexpectedTokenException<char>);
+  ASSERT_THROW([[maybe_unused]] const auto* _ = dynamic_cast<WhileInstruction<char>*>(parser.try_parse_while_block().release()), UnexpectedTokenException<char>);
 }
 
 TEST(ParserTest, try_parse_if_block1){
@@ -1331,8 +1334,8 @@ TEST(ParserTest, try_parse_match_expression){
   auto &left = expr->get_left_expression();
   auto &right = expr->get_right_expression();
   ASSERT_EQ(expr->get_string_repr(), "MatchAndExpression");
-  ASSERT_EQ(dynamic_cast<SingleArgExpression<char>*>(left.get())->get_expression_type(), ExpressionType::MatchLtExpression);
-  ASSERT_EQ(dynamic_cast<SingleArgExpression<char>*>(right.get())->get_expression_type(), ExpressionType::MatchGtExpression);
+  ASSERT_EQ(dynamic_cast<TwoArgExpression<char>*>(left.get())->get_expression_type(), ExpressionType::MatchLtExpression);
+  ASSERT_EQ(dynamic_cast<TwoArgExpression<char>*>(right.get())->get_expression_type(), ExpressionType::MatchGtExpression);
 }
 
 TEST(ParserTest, try_parse_pattern1){
@@ -1564,12 +1567,60 @@ fun main(): int{
   std::stringstream null_stream{};
   null_stream.setstate(std::ios_base::badbit);
   Lexer lex(s);
-  CommentFilterLexer<char> filered_lex{lex};
-  Parser parser(filered_lex);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
   auto fun_vect = parser.parse();
   auto program = Program<char>(std::move(fun_vect));
-  program.print_self(null_stream);
+  ASSERT_NO_THROW(ProgramTreePrinter<char>{null_stream}.print_program(program));
 }
+
+TEST(InterpreterTest, negation_sticking_test1){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << 
+  R"(
+fun main(): int{
+  if(not true == false){
+    return 0;
+  }
+  return 1;
+}
+    )";
+
+  std::stringstream null_stream{};
+  null_stream.setstate(std::ios_base::badbit);
+  Lexer lex(s);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
+  auto program = std::make_unique<Program<char>>(parser.parse());
+  Interpreter<char> inter{std::move(program), null_stream, {}};
+  ASSERT_EQ(inter.run(), 0L);
+}
+
+
+TEST(InterpreterTest, negation_sticking_test2){
+  std::stringstream s;
+  s.unsetf(std::ios::skipws);
+  s << 
+  R"(
+fun main(): int{
+  if(not 3 > 2){
+    return 0;
+  }
+  return 1;
+}
+    )";
+
+  std::stringstream null_stream{};
+  null_stream.setstate(std::ios_base::badbit);
+  Lexer lex(s);
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
+  auto program = std::make_unique<Program<char>>(parser.parse());
+  Interpreter<char> inter{std::move(program), null_stream, {}};
+  ASSERT_THROW(inter.run(), OperatorArgumentMismatchException<char>);
+}
+
 
 TEST(InterpreterTest, big_test){
   std::stringstream s;
@@ -1725,9 +1776,9 @@ fun main(): int{
   std::stringstream null_stream{};
   null_stream.setstate(std::ios_base::badbit);
   Lexer lex(s);
-  CommentFilterLexer<char> filered_lex{lex};
-  Parser parser(filered_lex);
-  auto program = std::make_unique<Program<char>>(std::move(parser.parse()));
+  CommentFilterLexer<char> filtered_lex{lex};
+  Parser parser(filtered_lex);
+  auto program = std::make_unique<Program<char>>(parser.parse());
   Interpreter<char> inter{std::move(program), null_stream, {"./Makefile"}};
   ASSERT_NO_THROW(inter.run());
 

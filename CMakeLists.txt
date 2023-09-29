@@ -5,7 +5,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "")
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(GENERAL_FLAGS   -Wall -Wextra -pedantic -Werror -flto=auto -fanalyzer)
+#set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-llvm*,-readability-identifier-length,-fuchsia*,-altera*,-modernize-use-trailing-return-type,-readability-function-cognitive-complexity,-misc-no-recursion,-google-readability-todo")
+set(GENERAL_FLAGS   -Wall -Wextra -Wpedantic -Wshadow -Werror -Wconversion )
+# -fsanitize=undefined -fsanitize-minimal-runtime
+# add_link_options("-fsanitize=undefined")
+
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -22,20 +27,20 @@ file(GLOB proj_LIB CONFIGURE_DEPENDS "src/lib/*.h" "src/lib/*.cpp" "src/lib/*.hp
 
 add_library(tkom_proj_lib STATIC ${proj_LIB})
 
-target_include_directories(tkom_proj_lib PUBLIC include)
+target_include_directories(tkom_proj_lib PUBLIC include include/fwd)
 
 
 add_library(tkom_proj_lib_gcov STATIC EXCLUDE_FROM_ALL ${proj_LIB})
 
-target_include_directories(tkom_proj_lib_gcov PUBLIC include)
+target_include_directories(tkom_proj_lib_gcov PUBLIC include include/fwd)
 
-target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
+target_compile_options(tkom_proj_lib_gcov PUBLIC ${GENERAL_FLAGS} --coverage -g3 -gdwarf-4 -O0)
 
 
 add_executable(main src/main.cpp)
 
 target_compile_options(main PUBLIC ${GENERAL_FLAGS} -O3)
-target_compile_options(main PUBLIC ${GENERAL_FLAGS} -O3)
+
 
 target_link_libraries(main PUBLIC tkom_proj_lib)
 
@@ -58,9 +63,9 @@ add_executable(
   test/tests.cpp
 )
 
-target_include_directories(tests PUBLIC include)
+target_include_directories(tests PUBLIC include include/fwd)
 
-target_compile_options(tests PUBLIC ${GENERAL_FLAGS} --coverage -g3 -O0)
+target_compile_options(tests PUBLIC ${GENERAL_FLAGS} --coverage -g3 -gdwarf-4 -O0)
 
 target_link_libraries(
   tests

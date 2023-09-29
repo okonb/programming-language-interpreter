@@ -6,6 +6,7 @@
 template<CharType T>
 class ILexer{
 public:
+    virtual ~ILexer() = default;
     virtual Token<T> get_next_token() = 0;
 };
 

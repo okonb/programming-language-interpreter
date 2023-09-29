@@ -2,10 +2,10 @@
 #define TYPE_IDENTIFIER_HPP
 
 #include <stdexcept>
-#include <map>
 #include <string>
 #include <sstream>
 #include "CharType.hpp"
+#include "light_map.hpp"
 
 
 class ConstVoidTypeException : public std::runtime_error {
@@ -38,11 +38,14 @@ public:
         return s.str();
     }
     bool operator==(const TypeIdentifier<T> &other) const {return type == other.get_type() && is_const == other.get_is_const();}
-    static const std::basic_string<T> &get_type_text(const Type t) {return type_map.at(t);}
+    static const std::basic_string_view<T> get_type_text(const Type t) {return type_map.at(t);}
 private:
     Type type;
     bool is_const;
-    static std::map<Type, std::basic_string<T>> type_map;
+    const static light_map<Type, std::basic_string_view<T>, 6UL> type_map;
 };
+template<> const light_map<Type, std::basic_string_view<char>, 6UL> TypeIdentifier<char>::type_map;
+
+extern template class TypeIdentifier<char>;
 
 #endif // TYPE_IDENTIFIER_HPP

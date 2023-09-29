@@ -3,8 +3,9 @@
 
 #include "CharType.hpp"
 #include "IInstruction.hpp"
-#include <map>
+#include "light_map.hpp"
 #include <string>
+#include <string_view>
 
 enum class ExpressionType{
     Expression,
@@ -38,6 +39,7 @@ enum class ExpressionType{
     MatchGteExpression,
     MatchEqualsExpression,
     MatchNotEqualsExpression,
+    MatchNotExpression,
     MatchNegateNumberExpression,
     IntegerLiteralExpression,
     FloatingLiteralExpression,
@@ -52,17 +54,17 @@ enum class ExpressionType{
 template<CharType T>
 class IExpression : public IInstruction<T> {
 public:
-    IExpression(ExpressionType t, const Position &pos) : IInstruction<T>{pos}, type{t} {}
-    const std::basic_string<T> &get_string_repr() const {return expression_string_map.at(type);}
-    static const std::basic_string<T> &get_string_repr(ExpressionType t) {return expression_string_map.at(t);}
+    IExpression(const ExpressionType t, const Position &pos) : IInstruction<T>{pos}, type{t} {}
+    const std::basic_string_view<T> &get_string_repr() const {return expression_string_map.at(type);}
+    static const std::basic_string_view<T> &get_string_repr(ExpressionType t) {return expression_string_map.at(t);}
     ExpressionType get_expression_type() const {return type;}
-    void print_self(std::basic_ostream<T> &stream, const size_t level = 0) const override{
-        this->print_n_spaces(stream, level);
-        stream << this->get_string_repr() << "\n";
-    }
+    
 private:
     ExpressionType type;
-    static std::map<ExpressionType, std::basic_string<T>> expression_string_map;
+    const static light_map<ExpressionType, std::basic_string_view<T>, 41UL> expression_string_map;
 };
+
+template<> const light_map<ExpressionType, std::basic_string_view<char>, 41UL> IExpression<char>::expression_string_map;
+extern template class IExpression<char>;
 
 #endif // !IEXPRESSION_HPP

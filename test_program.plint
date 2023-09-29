@@ -19,6 +19,29 @@ fun fizzbuzz(n: const int): void {
     }
 }
 
+fun divisible_by_3(n: const int): bool {
+    return n % 3 == 0;
+}
+
+fun divisible_by_5(n: const int): bool {
+    return n % 5 == 0;
+}
+
+#demonstrates how bool variables, function calls and function identifiers 
+#can be used in match expressions
+fun fizzbuzz2(n: const int): void {
+    temp: int = 1;
+    while(temp <= n){
+        divisible_by_5: const bool = temp % 5 == 0;
+        match(temp, temp){
+            divisible_by_3(temp),   divisible_by_5: print("fizzbuzz\n"),
+            divisible_by_3,         _             : print("fizz\n"),
+            _,                      divisible_by_5: print("buzz\n"),
+            _,                      _             : print(to_str_int(temp) | "\n")
+        }
+        temp = temp + 1;
+    }
+}
 fun progressive_tax(salary: const float): float {   # not accurate
     tax_rate: float = match(salary){
         < 1000.0:   0.1,
@@ -94,7 +117,7 @@ fun main(): int{
     # bad_variable: int = 14.33;
     # print(to_str_int(bad_variable));
 
-    number: int = 6;
+    number: int = 20;
     print("Fibonacci[" | to_str_int(number) | "] number is " | to_str_int(fibonacci(number)) | ".\n");
 
     print("Checking if passing by reference works - printed below should be five (4 after incrementing)\n");
@@ -120,6 +143,19 @@ fun main(): int{
     if(not is_even2(3)){
         print("ok\n");
     }
-    fizzbuzz(15);
+    fizzbuzz2(15);
     return 0;
+}
+
+fun inna(x: int): int{
+    # inna2();
+    
+}
+
+fun inna2(): int{
+    return 5;
+}
+
+fun p(x: const int) : void{
+    print(to_str_int(x) | "\n");
 }

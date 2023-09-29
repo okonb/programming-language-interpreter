@@ -71,20 +71,24 @@ class Token{
 public:
     Token(TokenType t, const Position &p, token_value_t<T> v) : 
         type(t), position(p), value(std::move(v)) {
-        if( (std::holds_alternative<int64_t>(value) && type != TokenType::Integer_literal)  ||
-            (std::holds_alternative<double>(value) && type != TokenType::Floating_literal)  ||
-            (std::holds_alternative<bool>(value) && type != TokenType::Boolean_literal)     ||
-            (std::holds_alternative<std::basic_string<T>>(value) && !(
-                type == TokenType::String_literal   ||
-                type == TokenType::Comment          ||
-                type == TokenType::Identifier)))
-        {
+        if(is_type_and_value_mismatched(type, value)){ [[unlikely]]
             throw TokenTypeValueMismatch();
         }
     }
     TokenType get_type() const { return type; }
     const Position &get_position() const { return position; }
     const token_value_t<T> &get_value() const { return value; }
+
+private:
+    inline bool is_type_and_value_mismatched(TokenType ttype, const token_value_t<T> &tvalue){
+        return  (std::holds_alternative<int64_t>(tvalue) && ttype != TokenType::Integer_literal)  ||
+                (std::holds_alternative<double>(tvalue) && ttype != TokenType::Floating_literal)  ||
+                (std::holds_alternative<bool>(tvalue) && ttype != TokenType::Boolean_literal)     ||
+                (std::holds_alternative<std::basic_string<T>>(tvalue) && !(
+                    ttype == TokenType::String_literal   ||
+                    ttype == TokenType::Comment          ||
+                    ttype == TokenType::Identifier));
+    }
 private:
     TokenType type;
     Position position;

@@ -9,12 +9,16 @@
 #include "ValueType.hpp"
 #include "overload.hpp"
 #include "Variable.hpp"
+#include "light_map.hpp"
 #include <stdexcept>
 #include <functional>
-#include <map>
+#include <unordered_map>
 #include <variant>
 #include <fstream>
-#include <iostream>
+#include <optional>
+
+static constexpr const bool RESERVE_ON_SCOPE_CREATION = true;
+static constexpr const size_t RESERVE_ON_SCOPE_CREATION_SIZE = 3;
 
 
 template<CharType T>
@@ -73,7 +77,7 @@ public:
 template<CharType T>
 class SimpleTextException : public SimpleException<T>{
 public:
-    SimpleTextException(const std::basic_string<T> &text, const std::basic_string<T> &n, const Position &pos) :
+    SimpleTextException(const std::basic_string<T> &text, const std::basic_string_view<T> n, const Position &pos) :
         SimpleException<T>{text, pos}, name{n} {}
     const std::basic_string<T> &get_name() const {return name;}
 private:
@@ -83,77 +87,77 @@ private:
 template<CharType T>
 class DivisionByZeroException : public SimpleTextException<T>{
 public:
-    DivisionByZeroException(const std::basic_string<T> &operation_n, const Position &pos) :
+    DivisionByZeroException(const std::basic_string_view<T> operation_n, const Position &pos) :
         SimpleTextException<T>{"Division by zero.", operation_n, pos} {}
 };
 
 template<CharType T>
 class VoidVariableException : public SimpleTextException<T>{
 public:
-    VoidVariableException(const std::basic_string<T> &var_n, const Position &pos) :
+    VoidVariableException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Variable type set to void.", var_n, pos} {}
 };
 
 template<CharType T>
 class VariableRedefinitionException : public SimpleTextException<T>{
 public:
-    VariableRedefinitionException(const std::basic_string<T> &var_n, const Position &pos) :
+    VariableRedefinitionException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Variable redefinition.", var_n, pos} {}
 };
 
 template<CharType T>
 class FunctionRedefinitionException : public SimpleTextException<T>{
 public:
-    FunctionRedefinitionException(const std::basic_string<T> &fun_n, const Position &pos) :
+    FunctionRedefinitionException(const std::basic_string_view<T> fun_n, const Position &pos) :
         SimpleTextException<T>{"Function redefinition.", fun_n, pos} {}
 };
 
 template<CharType T>
 class VariableNotDeclaredException : public SimpleTextException<T>{
 public:
-    VariableNotDeclaredException(const std::basic_string<T> &var_n, const Position &pos) :
+    VariableNotDeclaredException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Variable was not declared in this scope.", var_n, pos} {}
 };
 
 template<CharType T>
 class FunctionNotDeclaredException : public SimpleTextException<T>{
 public:
-    FunctionNotDeclaredException(const std::basic_string<T> &var_n, const Position &pos) :
+    FunctionNotDeclaredException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Function was not declared.", var_n, pos} {}
 };
 
 template<CharType T>
 class ConstVariableAssignmentException : public SimpleTextException<T>{
 public:
-    ConstVariableAssignmentException(const std::basic_string<T> &var_n, const Position &pos) :
+    ConstVariableAssignmentException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Trying to assign to const variable.", var_n, pos} {}
 };
 
 template<CharType T>
 class NonBooleanConditionException : public SimpleTextException<T>{
 public:
-    NonBooleanConditionException(const std::basic_string<T> &var_n, const Position &pos) :
+    NonBooleanConditionException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Condition expression does not evaluate to boolean.", var_n, pos} {}
 };
 
 template<CharType T>
 class NoConditionException : public SimpleTextException<T>{
 public:
-    NoConditionException(const std::basic_string<T> &var_n, const Position &pos) :
+    NoConditionException(const std::basic_string_view<T> var_n, const Position &pos) :
         SimpleTextException<T>{"Condition expression not declared.", var_n, pos} {}
 };
 
 template<CharType T>
 class RecursionLimitException : public SimpleTextException<T>{
 public:
-    RecursionLimitException(const std::size_t level, const std::basic_string<T> name, const Position &pos) :
-        SimpleTextException<T>{"Recursion limit hit.", "Level: " + std::to_string(level) + ", calling function " + name + ".", pos} {}
+    RecursionLimitException(const std::size_t level, const std::basic_string<T> &f_name, const Position &pos) :
+        SimpleTextException<T>{"Recursion limit hit.", "Level: " + std::to_string(level) + ", calling function " + f_name + ".", pos} {}
 };
 
 template<CharType T>
 class VariableAssignmentTypeMismatchException : public std::runtime_error{
 public:
-    VariableAssignmentTypeMismatchException(const std::basic_string<T> &var_n, const TypeIdentifier<T> &var_t, const Type val_t, const Position &pos) :
+    VariableAssignmentTypeMismatchException(const std::basic_string_view<T> var_n, const TypeIdentifier<T> &var_t, const Type val_t, const Position &pos) :
         std::runtime_error{"Trying to assign to variable of different type."}, variable_name{var_n}, variable_type{var_t}, value_type{val_t}, position{pos} {}
     const std::basic_string<T> &get_variable_name() const {return variable_name;}
     const TypeIdentifier<T> &get_variable_type(){return variable_type;}
@@ -169,7 +173,7 @@ private:
 template<CharType T>
 class ReturnValueTypeMismatchException : public std::runtime_error{
 public:
-    ReturnValueTypeMismatchException(const std::basic_string<T> &func_name, const TypeIdentifier<T> &ret_t, const Type val_t, const Position &pos) :
+    ReturnValueTypeMismatchException(const std::basic_string_view<T> func_name, const TypeIdentifier<T> &ret_t, const Type val_t, const Position &pos) :
         std::runtime_error{"Trying to return variable of type different to declared."}, function_name{func_name}, return_type{ret_t}, value_type{val_t}, position{pos} {}
     const std::basic_string<T> &get_function_name() const {return function_name;}
     const TypeIdentifier<T> &get_return_type(){return return_type;}
@@ -185,7 +189,7 @@ private:
 template<CharType T>
 class FunctionArgumentMismatchException : public std::runtime_error{
 public:
-    FunctionArgumentMismatchException(const std::basic_string<T> &operation_n, const std::vector<TypeIdentifier<T>> &types_e, const std::vector<TypeIdentifier<T>> &types_g, size_t no, const Position &pos) :
+    FunctionArgumentMismatchException(const std::basic_string_view<T> operation_n, const std::vector<TypeIdentifier<T>> &types_e, const std::vector<TypeIdentifier<T>> &types_g, size_t no, const Position &pos) :
         std::runtime_error{"Mismatch in argument types."}, operation_name{operation_n}, expected_types{types_e}, gotten_types{types_g}, number{no}, position{pos} {}
     const std::basic_string<T> &get_function_name() const {return operation_name;}
     const std::vector<TypeIdentifier<T>> &get_expected_type_list() const {return expected_types;}
@@ -202,7 +206,7 @@ private:
 template<CharType T>
 class OperatorArgumentMismatchException : public std::runtime_error{
 public:
-    OperatorArgumentMismatchException(const std::basic_string<T> &operation_n, const std::initializer_list<Type> &types_e_l, const std::initializer_list<Type> &types_e_r, const std::initializer_list<Type> &types_g, const Position &pos) :
+    OperatorArgumentMismatchException(const std::basic_string_view<T> operation_n, const std::initializer_list<Type> &types_e_l, const std::initializer_list<Type> &types_e_r, const std::initializer_list<Type> &types_g, const Position &pos) :
         std::runtime_error{"Mismatch in argument types."}, operation_name{operation_n}, expected_types_left{types_e_l}, expected_types_right{types_e_r}, gotten_types{types_g}, position{pos} {}
     const std::basic_string<T> &get_operator_name() const {return operation_name;}
     const std::vector<Type> &get_expected_type_list_left() const {return expected_types_left;}
@@ -217,18 +221,30 @@ private:
 
 
 template<CharType T>
-using Scope = std::map<std::basic_string<T>, std::shared_ptr<Variable<T>>>;
+using Scope = std::unordered_map<std::basic_string<T>, std::shared_ptr<Variable<T>>>;
 
 
 template<CharType T>
 class Context{
 public:
-    Context() : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back({});}
-    Context(Scope<T> &scp) : scopes{}, current_match_index{0}, current_match_arguments{} {scopes.push_back(scp);}
+    Context() : scopes{}, current_match_index{0}, current_match_arguments{} {
+        if constexpr(RESERVE_ON_SCOPE_CREATION){
+        scopes.reserve(RESERVE_ON_SCOPE_CREATION_SIZE);
+        }
+        scopes.push_back({});
+    }
+    explicit Context(Scope<T> &&scp) : scopes{}, current_match_index{0}, current_match_arguments{} {
+        if constexpr(RESERVE_ON_SCOPE_CREATION){
+        scopes.reserve(RESERVE_ON_SCOPE_CREATION_SIZE);
+        }
+        scopes.push_back(std::move(scp));
+    }
     std::vector<Scope<T>> &get_scopes() {return scopes;}
+    const std::vector<Scope<T>> &get_scopes() const {return scopes;}
     size_t get_match_index() const {return current_match_index;}
-    void set_match_index(size_t i) {current_match_index = i;}
+    void set_match_index(const size_t i) {current_match_index = i;}
     std::vector<value_t<T>> &get_match_arguments() {return current_match_arguments;}
+    const std::vector<value_t<T>> &get_match_arguments() const {return current_match_arguments;}
 private:
     std::vector<Scope<T>> scopes;
     size_t current_match_index;
@@ -239,75 +255,70 @@ private:
 template<CharType T>
 class Interpreter : public IVisitor<T>{
 public:
-    Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream, const std::vector<std::basic_string<T>> &args);
+    Interpreter(std::unique_ptr<Program<T>> prog, std::basic_ostream<T> &o_stream,
+        const std::vector<std::basic_string<T>> &args, size_t max_recursion_depth = 100UL);
     int64_t run(const std::basic_string<T> &to_start_name = "main");
-    void visit(FunctionDefinition<T> &instr) override;
-    void visit(ReturnInstruction<T> &instr) override;
-    void visit(AssignmentInstruction<T> &instr) override;
-    void visit(VarDefinitionInstruction<T> &instr) override;
-    void visit(IfInstruction<T> &instr) override;
-    void visit(WhileInstruction<T> &instr) override;
+    void visit(const FunctionDefinition<T> &instr) override;
+    void visit(const ReturnInstruction<T> &instr) override;
+    void visit(const AssignmentInstruction<T> &instr) override;
+    void visit(const VarDefinitionInstruction<T> &instr) override;
+    void visit(const IfInstruction<T> &instr) override;
+    void visit(const WhileInstruction<T> &instr) override;
 
-    void visit(SingleArgExpression<T> &instr) override;
-    void visit(TwoArgExpression<T> &instr) override;
-    void visit(LiteralExpression<T> &instr) override;
-    void visit(IdentifierExpression<T> &instr) override;
-    void visit(FunctionCall<T> &instr) override;
-    
-    void visit(MatchOperation<T> &instr) override;
+    void visit(const SingleArgExpression<T> &expr) override;
+    void visit(const TwoArgExpression<T> &expr) override;
+    void visit(const LiteralExpression<T> &expr) override;
+    void visit(const IdentifierExpression<T> &expr) override;
+    void visit(const FunctionCall<T> &expr) override;
+
+    void visit(const MatchOperation<T> &instr) override;
 private:
-    std::unique_ptr<std::map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
+    std::unique_ptr<std::unordered_map<std::basic_string<T>, std::unique_ptr<FunctionDefinition<T>>>> function_definitions;
     value_t<T> current_value;
     std::shared_ptr<Variable<T>> current_variable;
-    bool return_flag, match_flag;
+    bool returned_flag, match_flag;
     std::vector<Context<T>> function_stack;
     std::basic_ostream<T> &out_stream;
     const std::vector<std::basic_string<T>> program_arguments;
-    std::map<std::basic_string<T>, std::basic_fstream<T>> open_files;
+    std::unordered_map<std::basic_string<T>, std::basic_fstream<T>> open_files;
     size_t current_recursion_level;
     const size_t MAX_RECURSION_LEVEL;
-    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string<T> &name, Type ret_type, bool ret_const,
-                                                const std::initializer_list<std::basic_string<T>> &p_names,
+    std::unique_ptr<FunctionDefinition<T>> get_f_d( const std::basic_string_view<T> name, const Type ret_type, const bool ret_const,
+                                                const std::initializer_list<std::basic_string_view<T>> p_names,
                                                 const std::initializer_list<Type> &p_types,
-                                                const std::initializer_list<bool> &p_consts);
+                                                const std::initializer_list<bool> &p_consts) const;
     std::unique_ptr<FunctionDefinition<T>> &get_function(const std::basic_string<T> &name);
     std::shared_ptr<Variable<T>> get_variable_from_current_context(const std::basic_string<T> &name);
-    bool is_function_pointer_valid(const std::unique_ptr<FunctionDefinition<T>> & ptr);
-    bool is_value_bool(const value_t<T> &v);
-    bool is_value_int(const value_t<T> &v);
-    bool is_value_float(const value_t<T> &v);
-    bool is_value_string(const value_t<T> &v);
-    bool is_current_value_bool();
-    bool is_current_value_int();
-    bool is_current_value_float();
-    bool is_current_value_string();
-    bool is_current_value_of_type(Type type);
-    bool is_variable_name_in_current_scope(const std::basic_string<T> &name);
-    bool is_variable_name_in_current_context(const std::basic_string<T> &name);
-    bool is_argument_of_right_type(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
+    bool is_current_value_of_type(const Type type) const;
+    bool is_variable_name_in_current_scope(const std::basic_string<T> &name) const;
+    bool is_variable_name_in_current_context(const std::basic_string<T> &name) const;
+    bool is_argument_of_right_type(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t) const;
     bool is_argument_a_file(const TypeIdentifier<T> &param_t, const TypeIdentifier<T> &arg_t);
-    bool is_recursion_level_exceeded();
-    void push_context(Context<T> context);
+    bool is_recursion_level_exceeded() const;
+    void push_context(Context<T> &&context);
     void pop_context();
     void push_scope();
     void pop_scope();
-    void execute_block(std::vector<std::unique_ptr<IInstruction<T>>> &block);
+    void execute_block(const std::vector<std::unique_ptr<IInstruction<T>>> &block);
     void add_builtins();
     void run_builtin(const std::basic_string<T> &name);
     void add_variable(const std::basic_string<T> &name, const TypeIdentifier<T> &type);
 
-    Type get_value_type(const value_t<T> &v);
-    Type get_current_value_type();
+    Type get_value_type(const value_t<T> &v) const;
+    Type get_current_value_type() const;
     Scope<T> &get_current_scope();
     Context<T> &get_current_context();
-    size_t get_current_match_index();
-    void set_current_match_index(size_t i);
+    const Scope<T> &get_current_scope() const;
+    const Context<T> &get_current_context() const;
+    size_t get_current_match_index() const;
+    void set_current_match_index(const size_t i);
     void increment_current_match_index();
     std::vector<value_t<T>> &get_current_match_arguments();
-    bool is_expression_match(ExpressionType type) const;
-    ExpressionType map_from_match(ExpressionType type) const;
-    value_t<T> get_current_match_argument();
-    static std::map<ExpressionType, ExpressionType> match_expression_type_map;
+    const std::vector<value_t<T>> &get_current_match_arguments() const;
+    const value_t<T> &get_current_match_argument() const;
+    static std::optional<ExpressionType> map_from_match(const ExpressionType type);
+
+    const static light_map<ExpressionType, ExpressionType, 14UL> match_expression_type_map;
 
     class recursion_level_guard{
     public:

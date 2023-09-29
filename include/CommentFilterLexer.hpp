@@ -9,7 +9,7 @@ class CommentFilterLexer : public ILexer<T>{
 public:
     CommentFilterLexer(ILexer<T> &lex) : 
         lexer{lex}, current_token{Token<T>({}, {}, {})} {}
-    Token<T> get_next_token() override{
+    Token<T> get_next_token() override {
         skip_comments();
         return current_token;
     }
