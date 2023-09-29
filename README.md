@@ -9,6 +9,7 @@ fun example(number: const int): str {
     };
 }
 ```
+*It is currently not advanced or convenient enough to build anything non-trivial (no arrays, limited I/O etc.).*
 
 ## Building
 ### Requirements
@@ -30,9 +31,88 @@ Run interpreter with command:
 ```
 
 ## Language overview
-TODO
 
-A detailed description may be found in the `docs` catalog of the repository.
+A program consists of function declarations. Functions take in typed arguments and return values. By default, `main` is executed first.
+```
+fun add(a: const int, b: const int): int {
+    return a + b;
+}
+
+fun main(): int {
+    one: const int = 1;
+    two: const int = 2;
+    return add(one, two);
+}
+```
+Non-const variable arguments are taken by reference which allows functions to modify its parameters.
+```
+fun add_one(number: int): void {
+    number = number + 1;
+}
+fun main(): int {
+    two: int = 1;
+    add_one(two);
+    return two;
+}
+``` 
+Flow control is done through familiar, C-like constructs. Typing is strong, string concatenation operator `|` only accepts two strings, which necessitates use of conversion functions. 
+```
+fun flow(): void {
+    num: const int = 4;
+    if(num <= 2){
+        return;
+    }
+    else if(num == 3 or num == 4){
+        num = num + 1;
+    }
+    temp: int = num;
+    while(temp > 0){
+        print("Number is " | to_str_int(temp) | " \n");
+        temp = temp - 1;
+    }
+}
+```
+The special ingredient is the `match` operation, which can be also an expression. Patterns can be composed of values, function identifiers or ad-hoc relation predicates.
+```
+fun is_even(num: const int): bool {
+    return num % 2 == 0;
+}
+fun example(num: const int): str {
+    return match(num, to_str_int(num)){
+        _,          "2" :   "two",
+        is_even,    _   :   "even",
+        < 0,        _   :   "negative",
+        _,          _   :   "whatever"
+    };
+}
+```
+Program arguments may be accesed through special functions. File access is done through a simple API, only string operations are supported.
+```
+fun main(): int {
+    args: cont int = arguments_number();
+    if(args < 1){
+        print("Provide filename as the first argument.\n");
+        return -1;
+    }
+
+    to_print_file: file = open_file(argument(0));
+    if(bad_file(to_print_file)){
+        print("File path invalid.\n");
+        return -1;
+    }
+
+    line: str = read_line(to_print_file);
+    while(line != EOF_MARKER){
+        print(line);
+        line = read_line(to_print_file);
+    }
+    close_file(to_print_file);
+    return 0;
+}
+```
+
+
+A more detailed description may be found in the `docs` catalog of the repository.
 
 ## Testing
 Currently tests are performed by building and running the `tests` executable. GTest is used as a testing framework.

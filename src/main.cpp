@@ -9,7 +9,7 @@
 #include <iterator>
 #include <span>
 
-constexpr bool PRINT_TREE_BEFORE_EXECUTION = true;
+constexpr bool PRINT_TREE_BEFORE_EXECUTION = false;
 
 
 using std::literals::operator""sv;

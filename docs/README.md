@@ -71,6 +71,24 @@ Underscore `_` indicates that we don't care about a specific match argument in a
 
 Match statement is also an expression. If no pattern matches arguments when assigning match expression to a variable an error occurs.
 
+### API
+Program argument handling:
+- `arguments_number(): int` - return number of arguments given to the program
+- `argument(index: int): str` - returns an argument as a string
+
+Conversion functions:
+- `to_str_int(num: const int): str`
+- `to_str_float(num: const float): str`
+- `to_int_float(num: const float): int`
+- `to_float_int(num: const int): float`
+
+Input/output:
+- `print(string: const str): void` - print `string` to the output stream
+- `open_file(filename: const str): file`
+- `close_file(file_descriptor: file): void`
+- `bad_file(file_descriptor: file): bool` - returns true if file is opened correctly and can be read from
+- `read_line(file_descriptor: file): str` - reads a line from file
+
 
 ### Formal syntax definition
 Formal specification of the language in EBNF/regex can be found in the `language_specification` catalog.
