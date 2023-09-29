@@ -24,18 +24,18 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         build_type: [tests]
-        include:
-          - os: windows-latest
-            cpp_compiler: cl
-          - os: ubuntu-latest
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            cpp_compiler: clang++
+        cpp_compiler: [g++-13, clang++-15]
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Install compilers and clang-tidy
+      run:   |
+         sudo apt update
+         sudo apt install g++-13 clang-15 clang-tidy-15
+      shell: bash
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
