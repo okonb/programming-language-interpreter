@@ -143,7 +143,7 @@ void Interpreter<T>::visit(const FunctionDefinition<T> &instr){
     if(returned_flag){
         const auto &return_type_ptr = instr.get_return_type();
         if(!return_type_ptr){
-            throw NullpointerException<T>{};
+            throw NullpointerException<T>{"No return type ptr."};
         }
         if(!is_current_value_of_type(return_type_ptr->get_type())){
             throw ReturnValueTypeMismatchException<T>(instr.get_name(), *instr.get_return_type(), get_current_value_type(), instr.get_position());
@@ -188,7 +188,7 @@ void Interpreter<T>::visit(const VarDefinitionInstruction<T> &instr){
     const auto &name = instr.get_name();
     const auto &variable_type_ptr = instr.get_type();
     if(!variable_type_ptr){
-        throw NullpointerException<T>{};
+        throw NullpointerException<T>{"No variable type ptr."};
     }
     if(variable_type_ptr->get_type() == Type::Void){
         throw VoidVariableException<T>(name, instr.get_position());
@@ -223,7 +223,7 @@ void Interpreter<T>::visit(const IfInstruction<T> &instr){
     
     if(*condition_ptr){
         if(!code_block_ptr){
-            throw NullpointerException<T>{};
+            throw NullpointerException<T>{"No if condition pointer."};
         }
         execute_block(*code_block_ptr);
     }
@@ -279,7 +279,7 @@ void Interpreter<T>::visit(const SingleArgExpression<T> &expr){
         expression_ptr->accept(*this);
     }
     else{
-        throw NullpointerException<T>{};
+        throw NullpointerException<T>{"No single arg expression ptr."};
     }
 
     if(expr_type == ExpressionType::NegateNumberExpression){
@@ -325,7 +325,7 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
         left_value = current_value;
     }
     else{
-        throw NullpointerException<T>();
+        throw NullpointerException<T>("No left expression ptr.");
     }
     if(expr_type == ExpressionType::AndExpression){
         const auto *left_value_bool_ptr = std::get_if<bool>(&left_value);
@@ -340,7 +340,7 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
             right_expression_ptr->accept(*this);
         }
         else{
-            throw NullpointerException<T>{};
+            throw NullpointerException<T>{"No right expression ptr in and expression."};
         }
         
         const auto &right_value = current_value;
@@ -367,7 +367,7 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
             right_expression_ptr->accept(*this);
         }
         else{
-            throw NullpointerException<T>{};
+            throw NullpointerException<T>{"No right expression ptr in or expression."};
         }
         const auto &right_value = current_value;
         const auto *right_value_bool_ptr = std::get_if<bool>(&right_value);
@@ -387,7 +387,7 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
             right_expression_ptr->accept(*this);
         }
         else{
-            throw NullpointerException<T>{};
+            throw NullpointerException<T>{"No right expression ptr in modulo expression."};
         }
         const auto &right_value = current_value;
         const auto *right_value_int_ptr = std::get_if<int64_t>(&right_value);
@@ -406,7 +406,7 @@ void Interpreter<T>::visit(const TwoArgExpression<T> &expr){
         right_expression_ptr->accept(*this);
     }
     else{
-        throw NullpointerException<T>{};
+        throw NullpointerException<T>{"No right expression ptr."};
     }
     const auto &right_value = current_value;
 
@@ -534,7 +534,7 @@ template<CharType T>
 void Interpreter<T>::visit(const MatchOperation<T> &instr){
     const auto &arguments = instr.get_arguments();
     if(!arguments){
-        throw NullpointerException<T>();
+        throw NullpointerException<T>("No match operation arguments ptr.");
     }
 
     auto &argument_values = get_current_match_arguments();
@@ -548,7 +548,7 @@ void Interpreter<T>::visit(const MatchOperation<T> &instr){
     }
     const auto &block = instr.get_block();
     if(!block){
-        throw NullpointerException<T>();
+        throw NullpointerException<T>("No match operation block ptr.");
     }
     match_flag = true;
     bool pattern_good = true;

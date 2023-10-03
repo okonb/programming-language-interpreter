@@ -24,7 +24,8 @@ term                            = [Not | Minus], (literal
 
 match_expression                = match_logic_factor, {Or, match_logic_factor};
 match_logic_factor              = match_relation, {And, match_relation};
-match_relation                  = relation_operator, match_math_expression;
+match_relation                  = ([match_math_expression], relation_operator, match_math_expression)
+                                | (match_math_expression, [relation_operator, match_math_expression]);
 
 match_math_expression           = match_factor, {(Plus | Minus | String_concat), match_factor};
 match_factor                    = match_term, {(Multiplication | Division | Modulo), match_term};

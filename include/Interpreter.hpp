@@ -68,13 +68,6 @@ public:
 };
 
 template<CharType T>
-class NullpointerException : public SimpleException<T>{
-public:
-    NullpointerException() :
-        SimpleException<T>{"Encountered null pointer, program tree invalid.", {}} {}
-};
-
-template<CharType T>
 class SimpleTextException : public SimpleException<T>{
 public:
     SimpleTextException(const std::basic_string<T> &text, const std::basic_string_view<T> n, const Position &pos) :
@@ -82,6 +75,13 @@ public:
     const std::basic_string<T> &get_name() const {return name;}
 private:
     const std::basic_string<T> name;
+};
+
+template<CharType T>
+class NullpointerException : public SimpleTextException<T>{
+public:
+    NullpointerException(const std::basic_string_view<T> mesg) :
+        SimpleTextException<T>{"Encountered null pointer, program tree invalid.", mesg, {}}{}
 };
 
 template<CharType T>
