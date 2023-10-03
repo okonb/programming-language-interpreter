@@ -66,18 +66,22 @@ int main(int argc, char** argv){
         std::cerr << e.what() << "\nAt position " << line << ":" << column << "\n";
     }
     catch(UnexpectedTokenException<char> &e){
-        std::cerr << e.what() << " in parsing function " << e.get_function_throwing_name() << ". Expected:\n";
+        const auto &received_token = e.get_received_token();
+        const auto [line, column] = received_token.get_position();
+        std::cerr << e.what() << " in parser function " << e.get_function_throwing_name() << ".\nExpected: ";
         for(const auto &token : e.get_expected_token_list()){
             std::cerr << Lexer<char>::get_token_text(token) << ", ";
         }
-        std::cerr << "\ngot: " << Lexer<char>::get_token_text(e.get_received_token().get_type()) << " at "
-            << e.get_received_token().get_position().line << ":" << e.get_received_token().get_position().column << "\n";
+        std::cerr << "\ngot: " << Lexer<char>::get_token_text(received_token.get_type()) << " at "
+            << line << ":" << column << ".\n";
     }
     catch(SyntaxErrorException<char> &e){
-        std::cerr << e.what() << " in parsing function " << e.get_function_throwing_name() << ". Expected production:\n";
+        const auto &received_token = e.get_received_token();
+        const auto [line, column] = received_token.get_position();
+        std::cerr << e.what() << " in parser function " << e.get_function_throwing_name() << ".\nExpected production: ";
         std::cerr << e.get_expected_production();
-        std::cerr << "\ngot: " << Lexer<char>::get_token_text(e.get_received_token().get_type()) << " at "
-            << e.get_received_token().get_position().line << ":" << e.get_received_token().get_position().column << "\n";
+        std::cerr << "\ngot: " << Lexer<char>::get_token_text(received_token.get_type()) << " at "
+            << line << ":" << column << "\n";
     }
     catch(ProgramInitializationError<char> &e){
         std::cerr << e.what() << " " << e.get_doubled_function_name() << "\n";

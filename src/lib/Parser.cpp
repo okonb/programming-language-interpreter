@@ -513,19 +513,26 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_logic_factor(){
     return relation_l;
 }
 
-// match_relation = relation_operator, match_math_expression;
+// match_relation = ([match_math_expression], relation_operator, match_math_expression)
+//                  | (match_math_expression, [relation_operator, match_math_expression]);
 template<CharType T>
 std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_match_relation(){
     const auto start_position = get_current_position();
-    if(!is_current_token_relation_operator()){
-        return nullptr;
-    }
-    const auto type = map_current_to_match_expression_type();
-    advance_token();
-    auto math_expression = try_parse_match_math_expression();
-    expect_not_null(math_expression, "match_math_expression");
 
-    return std::make_unique<TwoArgExpression<T>>(type, nullptr, std::move(math_expression), start_position);
+    std::unique_ptr<IExpression<T>> math_expression_l = try_parse_match_math_expression();
+    std::unique_ptr<IExpression<T>> math_expression_r = nullptr;
+    ExpressionType type{};
+    if(is_current_token_relation_operator()){
+        type = map_current_to_match_expression_type();
+        advance_token();
+        math_expression_r = try_parse_match_math_expression();
+        expect_not_null(math_expression_r, "match_math_expression");
+    }
+    if(!math_expression_r){
+        return math_expression_l;
+    }
+
+    return std::make_unique<TwoArgExpression<T>>(type, std::move(math_expression_l), std::move(math_expression_r), start_position);
 }
 
 // match_math_expression = match_factor, {(Plus | Minus | String_concat), match_factor};
@@ -734,9 +741,6 @@ std::unique_ptr<IExpression<T>> ParserBase<T>::try_parse_pattern_element(){
     const auto start_position = get_current_position();
     if(auto match_expr = try_parse_match_expression()){
         return match_expr;
-    }
-    if(auto expr = try_parse_expression()){
-        return expr;
     }
     if(check_and_advance(TokenType::Underscore)){
         return std::make_unique<SingleArgExpression<T>>(ExpressionType::UnderscoreExpression, nullptr, start_position);
