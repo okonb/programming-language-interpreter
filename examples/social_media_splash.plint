@@ -1,0 +1,15 @@
+fun is_even(n: const int): bool {return n % 2 == 0;}
+
+fun main(): int {
+    to_print: const str = match(4){
+        not is_even or < 5: "yay!",
+        0:                  "zero",
+        _:                  "whatever"
+    };
+    print(to_print | "\n");
+    return 0;
+}
+
+
+
+
