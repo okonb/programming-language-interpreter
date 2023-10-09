@@ -12,7 +12,12 @@ fun example(number: const int): str {
     };
 }
 ```
-*The language is currently not advanced or convenient enough to build anything non-trivial with it (no arrays, limited I/O etc.).*
+
+#### Disclaimers
+
+This project is licensed under the [GNU GPLv3](./COPYING)  license and the author makes no guarantees regarding its correctness.
+
+*The language is currently not advanced or convenient enough to build anything non-trivial with (no arrays, limited I/O etc.).*
 
 ## Building
 ### Requirements
